@@ -1,0 +1,21 @@
+###############################################################################
+# (c) Copyright 2018 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "LICENCE".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
+
+@PACKAGE_INIT@
+
+find_package(PkgConfig)
+pkg_check_modules(git2 libgit2 REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ClimbingStatsTargets.cmake")
+
+set_target_properties(GitCondDB PROPERTIES
+  INTERFACE_LINK_LIBRARIES "${git2_LIBRARIES}"
+)

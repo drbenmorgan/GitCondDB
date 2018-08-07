@@ -1,21 +1,31 @@
-cmake_minimum_required(VERSION 3.10)
+###############################################################################
+# (c) Copyright 2018 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "LICENCE".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
+
+cmake_minimum_required(VERSION 3.11)
 
 # Project settings
 
 project(GitCondDB VERSION 1.0)
 
-option(GITCONDDB_BUILD_STATIC_LIBRARY "Build the static library" ON)
-option(GITCONDDB_BUILD_SHARED_LIBRARY "Build the shared library" ON)
+option(BUILD_SHARED_LIBS "Build shared library" ON)
+option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
 
-if(NOT (GITCONDDB_BUILD_STATIC_LIBRARY OR GITCONDDB_BUILD_SHARED_LIBRARY))
-  message(FATAL_ERROR "at least one of shared or static should be built")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wpedantic")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # external dependencies
 
@@ -30,32 +40,75 @@ include(GenerateExportHeader)
 set(HEAERS include/GitCondDB.h)
 set(SOURCES src/GitCondDB.cpp)
 
-add_library(objects OBJECT ${HEADERS} ${SOURCES})
-generate_export_header(objects BASE_NAME GitCondDB)
+add_library(GitCondDB ${HEADERS} ${SOURCES})
+generate_export_header(GitCondDB)
 
-target_include_directories(objects PRIVATE include ${git2_INCLUDE_DIRS})
-target_compile_definitions(objects PRIVATE -Dobjects_EXPORT)
+target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
+target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
 
+set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
+set_property(TARGET GitCondDB PROPERTY SOVERSION 1)
+set_property(TARGET GitCondDB PROPERTY
+  INTERFACE_GitCondDB_MAJOR_VERSION 1)
+set_property(TARGET GitCondDB APPEND PROPERTY
+  COMPATIBLE_INTERFACE_STRING GitCondDB_MAJOR_VERSION
+)
+set_property(TARGET GitCondDB PROPERTY
+  PUBLIC_HEADER ${HEADERS})
+set_property(TARGET GitCondDB APPEND PROPERTY
+  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h")
 
-# link static and/or shared libraries
+target_compile_features(GitCondDB PUBLIC cxx_std_17)
 
-if(GITCONDDB_BUILD_STATIC_LIBRARY)
-  add_library(Static STATIC $<TARGET_OBJECTS:objects>)
-  set_target_properties(Static PROPERTIES OUTPUT_NAME GitCondDB)
-  install(TARGETS Static EXPORT GitCondDB DESTINATION lib)
-endif()
-
-if(GITCONDDB_BUILD_SHARED_LIBRARY)
-  add_library(Shared SHARED $<TARGET_OBJECTS:objects>)
-  set_target_properties(Shared PROPERTIES OUTPUT_NAME GitCondDB)
-  install(TARGETS Shared EXPORT GitCondDB DESTINATION lib)
-endif()
+set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_RELEASE -DNDEBUG)
+set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_RELWITHDEBINFO -DNDEBUG)
+set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_MINSIZEREL -DNDEBUG)
 
 
 # installation
 
-install(FILES ${HEADERS} gitconddb_export.h DESTINATION include)
+install(TARGETS GitCondDB EXPORT GitCondDBTargets
+    LIBRARY DESTINATION lib
+      COMPONENT Runtime
+      #NAMELINK_COMPONENT Devel
+    ARCHIVE DESTINATION lib
+      COMPONENT Devel
+    RUNTIME DESTINATION bin
+      COMPONENT Runtime
+    PUBLIC_HEADER
+      DESTINATION include
+      COMPONENT Devel)
 
-export(EXPORT GitCondDB NAMESPACE GitCondDB::)
 
-install(EXPORT GitCondDB DESTINATION lib/GitCondDB NAMESPACE GitCondDB::)
+
+# package exports
+
+include(CMakePackageConfigHelpers)
+
+set(ConfigPackageLocation lib/cmake/GitCondDB)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
+  VERSION ${GitCondDB_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+configure_package_config_file(cmake/GitCondDBConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfig.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+)
+
+export(EXPORT GitCondDBTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBTargets.cmake")
+
+install(EXPORT GitCondDBTargets
+    DESTINATION ${ConfigPackageLocation})
+
+install(
+    FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfig.cmake"
+      "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
+    DESTINATION
+      ${ConfigPackageLocation}
+    COMPONENT
+      Devel
+)
