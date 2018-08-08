@@ -79,7 +79,6 @@ install(TARGETS GitCondDB EXPORT GitCondDBTargets
       COMPONENT Devel)
 
 
-
 # package exports
 
 include(CMakePackageConfigHelpers)
@@ -111,3 +110,58 @@ install(
     COMPONENT
       Devel
 )
+
+
+# testing
+enable_testing()
+
+find_package(GTest QUIET)
+if(NOT GTEST_FOUND)
+  include(ExternalProject)
+
+  # check if we have system wide sources
+  if(IS_DIRECTORY /usr/src/googletest)
+    set(GTEST_SOURCES SOURCE_DIR /usr/src/googletest)
+  else()
+    message(FATAL_ERROR "getting GTest sources not supported yet")
+  endif()
+
+  ExternalProject_Add(googletest-distribution
+    ${GTEST_SOURCES}
+    CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:SRTING=<INSTALL_DIR>
+                     -DBUILD_GTEST:BOOL=YES -DBUILD_GMOCK:BOOL=NO
+                     -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=YES
+                     -DCMAKE_CXX_STANDARD:STRING=17 -DCMAKE_CXX_EXTENSIONS:BOOL=OFF)
+
+  ExternalProject_Get_Property(googletest-distribution INSTALL_DIR)
+
+  file(MAKE_DIRECTORY "${INSTALL_DIR}/include")
+
+  add_library(GTest::GTest STATIC IMPORTED)
+  set_target_properties(GTest::GTest PROPERTIES
+    IMPORTED_LOCATION "${INSTALL_DIR}/lib/libgtest.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include")
+  find_package(Threads QUIET)
+  if(TARGET Threads::Threads)
+    set_target_properties(GTest::GTest PROPERTIES
+      INTERFACE_LINK_LIBRARIES "Threads::Threads")
+  endif()
+
+  add_library(GTest::Main STATIC IMPORTED)
+  set_target_properties(GTest::Main PROPERTIES
+    IMPORTED_LOCATION "${INSTALL_DIR}/lib/libgtest_main.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include")
+
+  add_custom_command(OUTPUT "${INSTALL_DIR}/lib/libgtest.a" "${INSTALL_DIR}/lib/libgtest_main.a"
+    DEPENDS googletest-distribution)
+  add_custom_target(googletest-local-install DEPENDS "${INSTALL_DIR}/lib/libgtest.a" "${INSTALL_DIR}/lib/libgtest_main.a")
+endif()
+
+
+include(GoogleTest)
+add_executable(test_GitCondDB src/tests/GitCondDB_UnitTests.cpp)
+target_link_libraries(test_GitCondDB GitCondDB GTest::GTest GTest::Main)
+if(TARGET googletest-distribution)
+  add_dependencies(test_GitCondDB googletest-distribution)
+endif()
+gtest_discover_tests(test_GitCondDB)
