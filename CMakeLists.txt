@@ -37,7 +37,7 @@ include(GenerateExportHeader)
 # Build instructions
 
 set(HEAERS include/GitCondDB.h)
-set(SOURCES src/GitCondDB.cpp)
+set(SOURCES src/helpers.h src/DBImpl.h src/GitCondDB.cpp)
 
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)
@@ -160,8 +160,28 @@ endif()
 
 include(GoogleTest)
 add_executable(test_GitCondDB src/tests/GitCondDB_UnitTests.cpp)
+target_include_directories(test_GitCondDB PRIVATE include)
 target_link_libraries(test_GitCondDB GitCondDB GTest::GTest GTest::Main)
 if(TARGET googletest-distribution)
   add_dependencies(test_GitCondDB googletest-distribution)
 endif()
 gtest_discover_tests(test_GitCondDB)
+
+# - prepare test repositories
+if(NOT CMAKE_VERSION VERSION_LESS 3.12)
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+else()
+  find_package(PythonInterp REQUIRED)
+  set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
+endif()
+
+configure_file(tests/prepare_test_data.py .dummy-prepare_test_data-dep.py
+  COPYONLY)
+execute_process(
+  COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/prepare_test_data.py
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  RESULT_VARIABLE prepare_test_data_result)
+
+if(prepare_test_data_result)
+  message(FATAL_ERROR "Failed to prepare test data")
+endif()

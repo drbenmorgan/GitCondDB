@@ -9,15 +9,21 @@
 * or submit itself to any jurisdiction.                                       *
 \*****************************************************************************/
 
+#include "GitCondDB.h"
+
 #include "gtest/gtest.h"
 
-TEST(TestCaseName, TestName) {
-  EXPECT_TRUE(true);
-  EXPECT_FALSE(true);
+using namespace GitCondDB::v1;
+
+TEST( GitConDBTests, Construction )
+{
+  CondDB db = connect( "test_data/repo-bare.git" );
+  EXPECT_EQ( std::get<0>( db.get( {"HEAD", "valid_runs.txt", 0} ) ),
+             "10\n20\n30\n95\n96\n97\n98\n99\n100\n101\n103\n200\n" );
 }
 
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
+int main( int argc, char** argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }
