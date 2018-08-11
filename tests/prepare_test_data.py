@@ -17,8 +17,8 @@ Script to prepare test data files and directories.
 
 import sys
 import os
+import logging
 from datetime import datetime
-from subprocess import check_call, check_output, STDOUT
 from os.path import join, isdir, dirname, exists
 from shutil import copytree, rmtree, copy
 
@@ -26,15 +26,19 @@ from shutil import copytree, rmtree, copy
 EPOCH = datetime(1970, 1, 1)
 
 
-def echo_cmd(func):
-    def wrap(*args, **kwargs):
-        print(args, kwargs)
-        return func(*args, **kwargs)
-    return wrap
-
-
-check_call = echo_cmd(check_call)
-check_output = echo_cmd(check_output)
+def call(*args, **kwargs):
+    from subprocess import check_output, STDOUT, CalledProcessError
+    logging.debug('call(*%r, **%r)', args, kwargs)
+    kwargs['stderr'] = STDOUT
+    try:
+        out = check_output(*args, **kwargs).rstrip()
+        if out:
+            logging.debug('OUTPUT:\n%s', out)
+    except CalledProcessError as err:
+        logging.error('%s failed with exit code %s', err.cmd, err.returncode)
+        if err.output:
+            logging.error('OUTPUT:\n%s', err.output)
+        sys.exit(err.returncode)
 
 
 def makedirs(*args):
@@ -60,24 +64,29 @@ def write_IOVs(iovs, path):
 
 
 def main():
+    level = logging.DEBUG if '--debug' in sys.argv or os.environ.get('VERBOSE') else logging.WARNING
+    logging.basicConfig(level=level)
+
     if exists('test_data'):
+        logging.debug('removing existing test_data')
         rmtree('test_data')
 
     path = join('test_data', 'repo')
 
     # initialize repository from template (tag 'v0')
     src_data = join(dirname(__file__), 'data', 'test_repo')
+    logging.debug('copying initial data from %s', src_data)
     copytree(src_data, path)
 
-    check_call(['git', 'init', path])
-    check_call(['git', 'config', '-f', '.git/config', 'user.name', 'Test User'], cwd=path)
-    check_call(['git', 'config', '-f', '.git/config', 'user.email', 'test.user@no.where'],
-               cwd=path)
-    check_call(['git', 'add', '.'], cwd=path)
+    call(['git', 'init', path])
+    call(['git', 'config', '-f', '.git/config', 'user.name', 'Test User'], cwd=path)
+    call(['git', 'config', '-f', '.git/config', 'user.email', 'test.user@no.where'],
+         cwd=path)
+    call(['git', 'add', '.'], cwd=path)
     env = dict(os.environ)
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
-    check_call(['git', 'commit', '-m', 'initial version'], cwd=path, env=env)
-    check_call(['git', 'tag', 'v0'], cwd=path)
+    call(['git', 'commit', '-m', 'initial version'], cwd=path, env=env)
+    call(['git', 'tag', 'v0'], cwd=path)
 
     # change values for tag 'v1'
     with open(join(src_data, 'values.xml')) as in_file:
@@ -109,15 +118,15 @@ def main():
     os.remove(join(path, 'changing.xml', 'v0.xml'))
     os.remove(join(path, 'changing.xml', 'v1.xml'))
 
-    check_call(['git', 'add', '--all', 'changing.xml'], cwd=path)
-    check_call(['git', 'commit', '-am', 'v1 data'], cwd=path)
-    check_call(['git', 'tag', 'v1'], cwd=path)
+    call(['git', 'add', '--all', 'changing.xml'], cwd=path)
+    call(['git', 'commit', '-am', 'v1 data'], cwd=path)
+    call(['git', 'tag', 'v1'], cwd=path)
 
     # changes for HEAD version (no tag)
     with open(join(src_data, 'values.xml')) as in_file:
         with open(join(path, 'values.xml'), 'w') as out_file:
             out_file.write(in_file.read().replace('42', '0'))
-    check_call(['git', 'commit', '-am', 'new data'], cwd=path)
+    call(['git', 'commit', '-am', 'new data'], cwd=path)
 
     # changes for local files
     with open(join(src_data, 'values.xml')) as in_file:
@@ -127,8 +136,7 @@ def main():
     # make a "bare" clone of the repository
     if exists(path + '-bare.git'):
         rmtree(path + '-bare.git')
-    print(check_output(['git', 'clone', '--mirror', path, path + '-bare.git'],
-                       stderr=STDOUT))
+    call(['git', 'clone', '--mirror', path, path + '-bare.git'])
 
     # prepare an overlay directory
     if exists(path + '-overlay'):
@@ -137,8 +145,7 @@ def main():
     with open(join(src_data, 'values.xml')) as in_file:
         with open(join(path + '-overlay', 'values.xml'), 'w') as out_file:
             out_file.write(in_file.read().replace('42', '777'))
-    print(check_output(['git', 'init'], cwd=path + '-overlay',
-                       stderr=STDOUT))
+    call(['git', 'init'], cwd=path + '-overlay')
 
 
 if __name__ == '__main__':

@@ -172,16 +172,17 @@ if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   find_package(Python REQUIRED COMPONENTS Interpreter)
 else()
   find_package(PythonInterp REQUIRED)
-  set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
+  add_executable(Python::Interpreter IMPORTED)
+  set_property(TARGET Python::Interpreter PROPERTY IMPORTED_LOCATION "${PYTHON_EXECUTABLE}")
 endif()
 
-configure_file(tests/prepare_test_data.py .dummy-prepare_test_data-dep.py
-  COPYONLY)
-execute_process(
-  COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/prepare_test_data.py
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  RESULT_VARIABLE prepare_test_data_result)
+add_custom_command(
+  COMMENT "Generating test data"
+  OUTPUT ${CMAKE_BINARY_DIR}/test_data/.stamp
+  COMMAND Python::Interpreter ${CMAKE_SOURCE_DIR}/tests/prepare_test_data.py
+  COMMAND ${CMAKE_COMMAND} -E touch test_data/.stamp
+  DEPENDS tests/prepare_test_data.py)
 
-if(prepare_test_data_result)
-  message(FATAL_ERROR "Failed to prepare test data")
-endif()
+add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
+
+add_dependencies(test_GitCondDB TestData)
