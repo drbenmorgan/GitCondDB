@@ -22,7 +22,7 @@ CondDB::~CondDB() {}
 
 void CondDB::disconnect() const { m_impl->disconnect(); }
 
-std::tuple<std::string, CondDB::IOVInfo> CondDB::get( const Key& key ) const
+std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key ) const
 {
   std::string object_id = key.tag + ":" + key.path;
   auto        data      = m_impl->get( object_id.c_str() );

@@ -40,7 +40,7 @@ namespace GitCondDB
         time_point_t time_point;
       };
 
-      struct IOVInfo {
+      struct IOV {
         time_point_t since = std::numeric_limits<time_point_t>::min();
         time_point_t until = std::numeric_limits<time_point_t>::max();
       };
@@ -59,7 +59,7 @@ namespace GitCondDB
 
       void disconnect() const;
 
-      std::tuple<std::string, IOVInfo> get( const Key& key ) const;
+      std::tuple<std::string, IOV> get( const Key& key ) const;
 
       std::chrono::system_clock::time_point commit_time( const std::string& commit_id ) const;
 
