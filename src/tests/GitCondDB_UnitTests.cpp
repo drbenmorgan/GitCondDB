@@ -11,11 +11,19 @@
 
 #include "GitCondDB.h"
 
+#include "DBImpl.h"
+
 #include "gtest/gtest.h"
 
 using namespace GitCondDB::v1;
 
-TEST( GitConDBTests, Construction )
+TEST( GitDBImpl, Bare )
+{
+  details::GitDBImpl db{"test_data/repo-bare.git"};
+  EXPECT_EQ( std::get<0>( db.get( "HEAD:valid_runs.txt" ) ), "10\n20\n30\n95\n96\n97\n98\n99\n100\n101\n103\n200\n" );
+}
+
+TEST( GitConDBTests, Basic )
 {
   CondDB db = connect( "test_data/repo-bare.git" );
   EXPECT_EQ( std::get<0>( db.get( {"HEAD", "valid_runs.txt", 0} ) ),
