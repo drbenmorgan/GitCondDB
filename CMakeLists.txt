@@ -19,6 +19,7 @@ option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
+set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -O0 --coverage")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -186,3 +187,20 @@ add_custom_command(
 add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
 
 add_dependencies(test_GitCondDB TestData)
+
+# - coverage reports
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  find_program(lcov_COMMAND NAMES lcov)
+  find_program(genhtml_COMMAND NAMES genhtml)
+  if(lcov_COMMAND AND genhtml_COMMAND)
+    add_custom_target(clean-coverage-stats
+      COMMAND ${lcov_COMMAND} --zerocounters --directory .
+      COMMENT "Cleaning coverage statistics")
+    add_custom_target(coverage-report
+      COMMAND ${lcov_COMMAND} --capture --directory . --output-file coverage.info
+      COMMAND ${lcov_COMMAND} --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
+      COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
+      COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
+      COMMENT "Generate coverage report")
+  endif()
+endif()
