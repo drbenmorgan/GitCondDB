@@ -196,11 +196,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     add_custom_target(clean-coverage-stats
       COMMAND ${lcov_COMMAND} --zerocounters --directory .
       COMMENT "Cleaning coverage statistics")
-    add_custom_target(coverage-report
+    add_custom_target(generate-coverage-report
       COMMAND ${lcov_COMMAND} --capture --directory . --output-file coverage.info
       COMMAND ${lcov_COMMAND} --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")
+    add_custom_target(coverage-report
+      COMMAND ${CMAKE_COMMAND} --build . --target clean-coverage-stats
+      COMMAND ${CMAKE_COMMAND} --build . --target test || true
+      COMMAND ${CMAKE_COMMAND} --build . --target generate-coverage-report)
   endif()
 endif()
