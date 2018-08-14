@@ -22,7 +22,6 @@ from datetime import datetime
 from os.path import join, isdir, dirname, exists
 from shutil import copytree, rmtree, copy
 
-
 EPOCH = datetime(1970, 1, 1)
 
 
@@ -59,29 +58,26 @@ def write_IOVs(iovs, path):
     write a list of (datetime, key) pairs to the IOVs file in path.
     '''
     with open(join(path, 'IOVs'), 'w') as IOVs:
-        IOVs.write(''.join('{0} {1}\n'.format(to_ts(dt), key)
-                           for dt, key in iovs))
+        IOVs.write(''.join(
+            '{0} {1}\n'.format(to_ts(dt), key) for dt, key in iovs))
 
 
-def main():
-    level = logging.DEBUG if '--debug' in sys.argv or os.environ.get('VERBOSE') else logging.WARNING
-    logging.basicConfig(level=level)
-
-    if exists('test_data'):
-        logging.debug('removing existing test_data')
-        rmtree('test_data')
-
-    path = join('test_data', 'repo')
-
+def lhcb_conddb_case(path):
     # initialize repository from template (tag 'v0')
     src_data = join(dirname(__file__), 'data', 'test_repo')
     logging.debug('copying initial data from %s', src_data)
     copytree(src_data, path)
 
     call(['git', 'init', path])
-    call(['git', 'config', '-f', '.git/config', 'user.name', 'Test User'], cwd=path)
-    call(['git', 'config', '-f', '.git/config', 'user.email', 'test.user@no.where'],
-         cwd=path)
+    call(
+        ['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
+        cwd=path)
+    call(
+        [
+            'git', 'config', '-f', '.git/config', 'user.email',
+            'test.user@no.where'
+        ],
+        cwd=path)
     call(['git', 'add', '.'], cwd=path)
     env = dict(os.environ)
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
@@ -99,19 +95,15 @@ def main():
     dir2017 = join(path, 'changing.xml', '2017')
 
     makedirs(dirInit, dir2016, dir2017)
-    write_IOVs([(EPOCH, 'initial'),
-                (datetime(2016, 1, 1), 2016),
-                (datetime(2017, 1, 1), 2017)],
-               join(path, 'changing.xml'))
+    write_IOVs([(EPOCH, 'initial'), (datetime(2016, 1, 1), 2016),
+                (datetime(2017, 1, 1), 2017)], join(path, 'changing.xml'))
 
-    copy(join(path, 'changing.xml', 'v0.xml'),
-         join(dirInit, 'v0'))
+    copy(join(path, 'changing.xml', 'v0.xml'), join(dirInit, 'v0'))
     write_IOVs([(EPOCH, 'v0')], dirInit)
 
-    copy(join(path, 'changing.xml', 'v1.xml'),
-         join(dir2016, 'v1'))
-    write_IOVs([(EPOCH, '../initial/v0'),
-                (datetime(2016, 7, 1), 'v1')], dir2016)
+    copy(join(path, 'changing.xml', 'v1.xml'), join(dir2016, 'v1'))
+    write_IOVs([(EPOCH, '../initial/v0'), (datetime(2016, 7, 1), 'v1')],
+               dir2016)
 
     write_IOVs([(EPOCH, '../2016/v1')], dir2017)
 
@@ -141,11 +133,53 @@ def main():
     # prepare an overlay directory
     if exists(path + '-overlay'):
         rmtree(path + '-overlay')
-    os.makedirs(path + '-overlay')
+    makedirs(path + '-overlay')
     with open(join(src_data, 'values.xml')) as in_file:
         with open(join(path + '-overlay', 'values.xml'), 'w') as out_file:
             out_file.write(in_file.read().replace('42', '777'))
     call(['git', 'init'], cwd=path + '-overlay')
+
+
+def create_mini_repo(path):
+    if exists(path):
+        rmtree(path)
+    call(['git', 'init', path])
+    call(
+        ['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
+        cwd=path)
+    call(
+        [
+            'git', 'config', '-f', '.git/config', 'user.email',
+            'test.user@no.where'
+        ],
+        cwd=path)
+
+    makedirs(join(path, 'TheDir'))
+    with open(join(path, 'TheDir', 'TheFile.txt'), 'w') as f:
+        f.write('some data\n')
+    call(['git', 'add', '.'], cwd=path)
+    env = dict(os.environ)
+    env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
+    call(['git', 'commit', '-m', 'message 1'], cwd=path, env=env)
+
+    if exists(path + '.git'):
+        rmtree(path + '.git')
+    call(['git', 'clone', '--mirror', path, path + '.git'])
+
+
+def main():
+    level = (logging.DEBUG
+             if ('--debug' in sys.argv or os.environ.get('VERBOSE')) else
+             logging.WARNING)
+    logging.basicConfig(level=level)
+
+    if exists('test_data'):
+        logging.debug('removing existing test_data')
+        rmtree('test_data')
+
+    lhcb_conddb_case(join('test_data', 'lhcb', 'repo'))
+
+    create_mini_repo(join('test_data', 'repo'))
 
 
 if __name__ == '__main__':

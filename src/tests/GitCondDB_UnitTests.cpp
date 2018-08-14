@@ -17,17 +17,81 @@
 
 using namespace GitCondDB::v1;
 
-TEST( GitDBImpl, Bare )
+TEST( GitDBImpl, Connection )
 {
-  details::GitDBImpl db{"test_data/repo-bare.git"};
-  EXPECT_EQ( std::get<0>( db.get( "HEAD:valid_runs.txt" ) ), "10\n20\n30\n95\n96\n97\n98\n99\n100\n101\n103\n200\n" );
+  details::GitDBImpl db{"test_data/repo.git"};
+  EXPECT_TRUE( db.connected() );
+  db.disconnect();
+  EXPECT_FALSE( db.connected() );
+  EXPECT_TRUE( db.exists( "HEAD" ) );
+  EXPECT_TRUE( db.connected() );
 }
 
-TEST( GitConDBTests, Basic )
+void access_test( const details::GitDBImpl& db )
 {
-  CondDB db = connect( "test_data/repo-bare.git" );
-  EXPECT_EQ( std::get<0>( db.get( {"HEAD", "valid_runs.txt", 0} ) ),
-             "10\n20\n30\n95\n96\n97\n98\n99\n100\n101\n103\n200\n" );
+  EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "some data\n" );
+
+  {
+    auto cont = std::get<1>( db.get( "HEAD:TheDir" ) );
+    EXPECT_EQ( cont.dirs, std::vector<std::string>{} );
+    EXPECT_EQ( cont.files, std::vector<std::string>{"TheFile.txt"} );
+    EXPECT_EQ( cont.root, "TheDir" );
+  }
+  {
+    auto cont = std::get<1>( db.get( "HEAD:" ) );
+    EXPECT_EQ( cont.dirs, std::vector<std::string>{"TheDir"} );
+    EXPECT_EQ( cont.files, std::vector<std::string>{} );
+    EXPECT_EQ( cont.root, "" );
+  }
+
+  {
+    EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
+    EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
+    EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
+  }
+
+  EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
+}
+
+TEST( GitDBImpl, Access ) { access_test( details::GitDBImpl{"test_data/repo"} ); }
+
+TEST( GitDBImpl, FailAccess )
+{
+  try {
+    access_test( details::GitDBImpl{"test_data/no-repo"} );
+    FAIL() << "exception expected for invalid db";
+  } catch ( std::runtime_error& err ) {
+    EXPECT_EQ( std::string_view{err.what()}.substr( 0, 22 ), "cannot open repository" );
+  }
+}
+
+TEST( GitDBImpl, AccessBare ) { access_test( details::GitDBImpl{"test_data/repo.git"} ); }
+
+TEST( GitCondDB, Connection )
+{
+  CondDB db = connect( "test_data/repo.git" );
+
+  EXPECT_TRUE( db.connected() );
+  db.disconnect();
+  EXPECT_FALSE( db.connected() );
+  EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some data\n" );
+  EXPECT_TRUE( db.connected() );
+
+  db.disconnect();
+  EXPECT_FALSE( db.connected() );
+  {
+    auto _ = db.scoped_connection();
+    EXPECT_FALSE( db.connected() );
+    EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some data\n" );
+    EXPECT_TRUE( db.connected() );
+  }
+  EXPECT_FALSE( db.connected() );
+}
+
+TEST( GitCondDB, Access )
+{
+  CondDB db = connect( "test_data/repo.git" );
+  EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
 }
 
 int main( int argc, char** argv )
