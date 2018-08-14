@@ -22,6 +22,8 @@ CondDB::~CondDB() {}
 
 void CondDB::disconnect() const { m_impl->disconnect(); }
 
+bool CondDB::connected() const { return m_impl->connected(); }
+
 std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key ) const
 {
   std::string object_id = key.tag + ":" + key.path;

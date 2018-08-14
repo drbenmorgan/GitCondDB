@@ -78,6 +78,8 @@ public:
     m_ptr.reset();
   }
 
+  bool is_set() const { return bool{m_ptr}; }
+
 private:
   factory_t          m_factory;
   mutable storage_t  m_ptr;

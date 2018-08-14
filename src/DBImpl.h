@@ -43,6 +43,10 @@ namespace GitCondDB
 
         virtual void disconnect() const = 0;
 
+        virtual bool connected() const = 0;
+
+        virtual bool exists( const char* object_id ) const = 0;
+
         virtual std::variant<std::string, dir_content> get( const char* object_id ) const = 0;
 
         virtual std::chrono::system_clock::time_point commit_time( const char* commit_id ) const = 0;
@@ -74,12 +78,42 @@ namespace GitCondDB
 
         void disconnect() const override { m_repository.reset(); }
 
+        bool connected() const override { return m_repository.is_set(); }
+
+        bool exists( const char* object_id ) const override
+        {
+          git_object* tmp = nullptr;
+          git_revparse_single( &tmp, m_repository.get(), object_id );
+          bool result = tmp;
+          git_object_free( tmp );
+          return result;
+        }
+
         std::variant<std::string, dir_content> get( const char* object_id ) const override
         {
           std::variant<std::string, dir_content> out;
           auto obj = get_object( object_id );
           if ( git_object_type( obj.get() ) == GIT_OBJ_TREE ) {
-            out = dir_content{};
+            dir_content entries;
+            {
+              std::string_view root{object_id};
+              const auto       pos = root.find_first_of( ':' );
+              if ( pos != root.npos ) {
+                root.remove_prefix( pos + 1 );
+              }
+              entries.root = root;
+            }
+            const git_tree* tree = reinterpret_cast<const git_tree*>( obj.get() );
+
+            const std::size_t     max_i = git_tree_entrycount( tree );
+            const git_tree_entry* te    = nullptr;
+
+            for ( std::size_t i = 0; i < max_i; ++i ) {
+              te = git_tree_entry_byindex( tree, i );
+              ( ( git_tree_entry_type( te ) == GIT_OBJ_TREE ) ? entries.dirs : entries.files )
+                  .emplace_back( git_tree_entry_name( te ) );
+            }
+            out = std::move( entries );
           } else {
             auto blob = reinterpret_cast<const git_blob*>( obj.get() );
             out       = std::string{reinterpret_cast<const char*>( git_blob_rawcontent( blob ) ),

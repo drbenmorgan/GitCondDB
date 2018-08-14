@@ -49,15 +49,20 @@ namespace GitCondDB
       /// The lifetime of the CondDB object must be longer than the AccessGuard.
       class AccessGuard
       {
-        AccessGuard( CondDB& db ) : db( db ) {}
+        friend struct CondDB;
+        AccessGuard( const CondDB& db ) : db( db ) {}
 
-        CondDB& db;
+        const CondDB& db;
 
       public:
         ~AccessGuard() { db.disconnect(); }
       };
 
       void disconnect() const;
+
+      bool connected() const;
+
+      AccessGuard scoped_connection() const { return AccessGuard( *this ); }
 
       std::tuple<std::string, IOV> get( const Key& key ) const;
 
