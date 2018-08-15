@@ -1,0 +1,16 @@
+stages:
+  - images
+  - build
+  - test
+
+ubuntu-image:
+  stage: images
+  tags:
+    - docker-image-build
+  only:
+    - docker-images
+  script: "echo" # unused but this line is required by GitLab CI
+  variables:
+    TO: ${CI_REGISTRY_IMAGE}:ubuntu
+    DOCKER_FILE: tests/docker/Dockerfile-ubuntu
+

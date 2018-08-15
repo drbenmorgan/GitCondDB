@@ -1,0 +1,6 @@
+FROM ubuntu
+
+RUN apt update && \
+    apt install -y build-essential git ninja-build curl cmake lcov pkg-config \
+                   libgit2-dev googletest \
+ && rm -rf /var/lib/apt/lists/*
