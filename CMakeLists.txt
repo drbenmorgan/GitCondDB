@@ -8,7 +8,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 
 # Project settings
 
@@ -197,8 +197,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
       COMMAND ${lcov_COMMAND} --zerocounters --directory .
       COMMENT "Cleaning coverage statistics")
     add_custom_target(generate-coverage-report
-      COMMAND ${lcov_COMMAND} --capture --directory . --output-file coverage.info
-      COMMAND ${lcov_COMMAND} --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
+      COMMAND ${lcov_COMMAND} --quiet --capture --directory . --output-file coverage.info
+      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")
