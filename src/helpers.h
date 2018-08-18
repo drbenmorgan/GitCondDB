@@ -29,25 +29,20 @@
 #endif
 // -------------- LIKELY/UNLIKELY macros (end)
 
-namespace std
-{
-  template <>
-  struct default_delete<git_object> {
-    void operator()( git_object* ptr ) const { git_object_free( ptr ); }
-  };
-  template <>
-  struct default_delete<git_repository> {
-    void operator()( git_repository* ptr ) const { git_repository_free( ptr ); }
-  };
-}
+struct git_object_deleter {
+  void operator()( git_object* ptr ) { git_object_free( ptr ); }
+};
+struct git_repository_deleter {
+  void operator()( git_repository* ptr ) { git_repository_free( ptr ); }
+};
 
-using git_object_ptr = std::unique_ptr<git_object>;
+using git_object_ptr = std::unique_ptr<git_object, git_object_deleter>;
 
 /// Helper class to allow on-demand connection to the git repository.
 class git_repository_ptr
 {
 public:
-  using storage_t = std::unique_ptr<git_repository>;
+  using storage_t = std::unique_ptr<git_repository, git_repository_deleter>;
   using factory_t = std::function<storage_t()>;
   using pointer   = storage_t::pointer;
   using reference = std::add_lvalue_reference<storage_t::element_type>::type;
