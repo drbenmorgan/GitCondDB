@@ -14,6 +14,11 @@ cmake_minimum_required(VERSION 3.10)
 
 project(GitCondDB VERSION 0.1.0)
 
+execute_process(COMMAND git describe --tags --always --first-parent HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
 
@@ -43,6 +48,9 @@ set(SOURCES src/helpers.h src/DBImpl.h src/GitCondDB.cpp)
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)
 
+# Generate a version header
+configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
+
 target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
 target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
 
@@ -56,7 +64,7 @@ set_property(TARGET GitCondDB APPEND PROPERTY
 set_property(TARGET GitCondDB PROPERTY
   PUBLIC_HEADER ${HEADERS})
 set_property(TARGET GitCondDB APPEND PROPERTY
-  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h")
+  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h" "${CMAKE_CURRENT_BINARY_DIR}/GitCondDBVersion.h")
 
 target_compile_features(GitCondDB PUBLIC cxx_std_17)
 
