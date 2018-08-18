@@ -54,6 +54,9 @@ namespace GitCondDB
 
       class GitDBImpl : public DBImpl
       {
+        using git_object_ptr     = GitCondDB::Helpers::git_object_ptr;
+        using git_repository_ptr = GitCondDB::Helpers::git_repository_ptr;
+
       public:
         GitDBImpl( std::string_view repository )
             : m_repository_url( repository ), m_repository{[this]() -> git_repository_ptr::storage_t {
