@@ -1,0 +1,43 @@
+stages:
+  - images
+  - build
+  - test
+
+
+ubuntu-image:
+  stage: images
+  tags:
+    - docker-image-build
+  only:
+    - docker-images
+  script: "echo" # unused but this line is required by GitLab CI
+  variables:
+    TO: ${CI_REGISTRY_IMAGE}:ubuntu
+    DOCKER_FILE: tests/docker/Dockerfile-ubuntu
+
+
+build-ubuntu-cov:
+  stage: build
+  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  script:
+    - mkdir -p build-ubuntu-cov
+    - cd build-ubuntu-cov
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Coverage ..
+    - cmake --build . --target all
+  artifacts:
+    paths:
+      - build-ubuntu-cov
+  cache:
+    paths:
+      - build-ubuntu-cov
+
+test-ubuntu-cov:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  script:
+    - cmake --build build-ubuntu-cov --target clean-coverage-stats
+    - cmake --build build-ubuntu-cov --target test
+    - cmake --build build-ubuntu-cov --target generate-coverage-report
+  artifacts:
+    paths:
+      - build-ubuntu-cov/coverage_report

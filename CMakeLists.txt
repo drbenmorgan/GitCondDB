@@ -8,11 +8,16 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
 
 # Project settings
 
-project(GitCondDB VERSION 1.0)
+project(GitCondDB VERSION 0.1.0)
+
+execute_process(COMMAND git describe --tags --always --first-parent HEAD
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
@@ -43,6 +48,9 @@ set(SOURCES src/helpers.h src/DBImpl.h src/GitCondDB.cpp)
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)
 
+# Generate a version header
+configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
+
 target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
 target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
 
@@ -56,7 +64,7 @@ set_property(TARGET GitCondDB APPEND PROPERTY
 set_property(TARGET GitCondDB PROPERTY
   PUBLIC_HEADER ${HEADERS})
 set_property(TARGET GitCondDB APPEND PROPERTY
-  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h")
+  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h" "${CMAKE_CURRENT_BINARY_DIR}/GitCondDBVersion.h")
 
 target_compile_features(GitCondDB PUBLIC cxx_std_17)
 
@@ -197,8 +205,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
       COMMAND ${lcov_COMMAND} --zerocounters --directory .
       COMMENT "Cleaning coverage statistics")
     add_custom_target(generate-coverage-report
-      COMMAND ${lcov_COMMAND} --capture --directory . --output-file coverage.info
-      COMMAND ${lcov_COMMAND} --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
+      COMMAND ${lcov_COMMAND} --quiet --capture --directory . --output-file coverage.info
+      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")

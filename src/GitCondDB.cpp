@@ -10,6 +10,7 @@
 \*****************************************************************************/
 
 #include <GitCondDB.h>
+#include <GitCondDBVersion.h>
 
 #include "DBImpl.h"
 
