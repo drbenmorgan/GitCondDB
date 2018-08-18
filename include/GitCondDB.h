@@ -32,7 +32,7 @@ namespace GitCondDB
     GITCONDDB_EXPORT CondDB connect( std::string_view repository );
 
     struct GITCONDDB_EXPORT CondDB {
-      using time_point_t = std::uint64_t;
+      using time_point_t = std::uint_fast64_t;
 
       struct Key {
         std::string  tag;
@@ -41,8 +41,18 @@ namespace GitCondDB
       };
 
       struct IOV {
-        time_point_t since = std::numeric_limits<time_point_t>::min();
-        time_point_t until = std::numeric_limits<time_point_t>::max();
+        time_point_t since = min();
+        time_point_t until = max();
+
+        constexpr static time_point_t min() { return std::numeric_limits<time_point_t>::min(); }
+        constexpr static time_point_t max() { return std::numeric_limits<time_point_t>::max(); }
+        IOV& cut( const IOV& boundary )
+        {
+          since = std::max( since, boundary.since );
+          until = std::min( until, boundary.until );
+          return *this;
+        }
+        bool valid() const { return since < until; }
       };
 
       /// RAII object to limit the time the connection to the repository stay open.

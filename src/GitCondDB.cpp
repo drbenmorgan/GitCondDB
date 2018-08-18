@@ -14,6 +14,11 @@
 
 #include "DBImpl.h"
 
+#include "iov_helpers.h"
+
+#include <sstream>
+#include <tuple>
+
 #include <cassert>
 
 using namespace GitCondDB::v1;
