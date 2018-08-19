@@ -16,6 +16,30 @@ ubuntu-image:
     DOCKER_FILE: tests/docker/Dockerfile-ubuntu
 
 
+build-ubuntu-rel:
+  stage: build
+  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  variables:
+    BUILDDIR: build-ubuntu-rel
+  script:
+    - mkdir -p ${BUILDDIR}
+    - cd ${BUILDDIR}
+    - cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
+    - cmake --build . --target all
+  artifacts:
+    paths:
+      - ${BUILDDIR}
+
+test-ubuntu-rel:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  variables:
+    BUILDDIR: build-ubuntu-rel
+  script:
+    - find ${BUILDDIR} -type f -exec touch -d $(date +@%s) \{} \;
+    - cmake --build ${BUILDDIR} --target test
+
+
 build-ubuntu-cov:
   stage: build
   image: ${CI_REGISTRY_IMAGE}:ubuntu
