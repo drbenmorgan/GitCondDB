@@ -75,6 +75,7 @@ namespace GitCondDB
 
       AccessGuard scoped_connection() const { return AccessGuard( *this ); }
 
+      // This siganture is required because of https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58328
       std::tuple<std::string, IOV> get( const Key& key ) const { return get( key, {} ); }
 
       std::tuple<std::string, IOV> get( const Key& key, const IOV& bounds ) const;
