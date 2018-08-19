@@ -70,6 +70,47 @@ TEST( GitDBImpl, FailAccess )
 
 TEST( GitDBImpl, AccessBare ) { access_test( details::GitDBImpl{"test_data/repo.git"} ); }
 
+TEST( FSImpl, Connection )
+{
+  details::FilesystemImpl db{"test_data/repo"};
+  EXPECT_TRUE( db.connected() );
+  db.disconnect();
+  EXPECT_TRUE( db.connected() );
+  EXPECT_TRUE( db.exists( "HEAD" ) );
+  EXPECT_TRUE( db.connected() );
+}
+
+TEST( FSImpl, Access )
+{
+  details::FilesystemImpl db{"test_data/repo"};
+
+  EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "some uncommitted data\n" );
+  EXPECT_EQ( std::get<0>( db.get( "foobar:TheDir/TheFile.txt" ) ), "some uncommitted data\n" );
+
+  {
+    auto cont = std::get<1>( db.get( "HEAD:TheDir" ) );
+    EXPECT_EQ( cont.dirs, std::vector<std::string>{} );
+    EXPECT_EQ( cont.files, std::vector<std::string>{"TheFile.txt"} );
+    EXPECT_EQ( cont.root, "TheDir" );
+  }
+  {
+    auto cont = std::get<1>( db.get( "HEAD:" ) );
+
+    std::vector<std::string> expected{"Cond", ".git", "TheDir"};
+    EXPECT_EQ( cont.dirs, expected );
+    EXPECT_EQ( cont.files, std::vector<std::string>{} );
+    EXPECT_EQ( cont.root, "" );
+  }
+
+  {
+    EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
+    EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
+    EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
+  }
+
+  EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
+}
+
 TEST( GitCondDB, Connection )
 {
   CondDB db = connect( "test_data/repo.git" );
@@ -93,8 +134,21 @@ TEST( GitCondDB, Connection )
 
 TEST( GitCondDB, Access )
 {
-  CondDB db = connect( "test_data/repo.git" );
-  EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
+  {
+    CondDB db = connect( "test_data/repo.git" );
+    EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some data\n" );
+    EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
+  }
+  {
+    CondDB db = connect( "git:test_data/repo.git" );
+    EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some data\n" );
+    EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
+  }
+  {
+    CondDB db = connect( "file:test_data/repo" );
+    EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some uncommitted data\n" );
+    EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
+  }
 }
 
 TEST( IOVHelpers, ParseIOVs )
@@ -188,6 +242,52 @@ TEST( GitCondDB, IOVAccess )
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 1" );
   }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 0} );
+    EXPECT_EQ( iov.since, 0 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 0" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 210} );
+    EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+    EXPECT_EQ( data, "data 2" );
+  }
+
+  // for attempt of invalid retrieval
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
+    EXPECT_FALSE( iov.valid() );
+    EXPECT_EQ( data, "" );
+  }
+}
+
+TEST( GitCondDB, Directory_FS )
+{
+  CondDB db = connect( "file:test_data/lhcb/repo" );
+  auto[data, iov] = db.get( {"dummy", "Direct", 0} );
+  EXPECT_EQ( iov.since, GitCondDB::CondDB::IOV::min() );
+  EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+  EXPECT_EQ( data, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+                   "<!DOCTYPE DDDB SYSTEM \"git:/DTD/structure.dtd\">"
+                   "<DDDB><catalog name=\"Direct\">"
+                   "<catalogref href=\"Direct/Nested\"/>"
+                   "<conditionref href=\"Direct/Cond1\"/>"
+                   "<conditionref href=\"Direct/Cond2\"/>"
+                   "</catalog></DDDB>" );
+}
+
+TEST( GitCondDB, IOVAccess_FS )
+{
+  CondDB db = connect( "file:test_data/repo" );
+
   {
     auto[data, iov] = db.get( {"v1", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );

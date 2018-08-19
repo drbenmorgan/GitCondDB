@@ -127,5 +127,11 @@ std::chrono::system_clock::time_point CondDB::commit_time( const std::string& co
 
 CondDB GitCondDB::v1::connect( std::string_view repository )
 {
-  return {std::make_unique<details::GitDBImpl>( repository )};
+  if ( repository.substr( 0, 5 ) == "file:" ) {
+    return {std::make_unique<details::FilesystemImpl>( repository.substr( 5 ) )};
+  } else if ( repository.substr( 0, 4 ) == "git:" ) {
+    return {std::make_unique<details::GitDBImpl>( repository.substr( 4 ) )};
+  } else {
+    return {std::make_unique<details::GitDBImpl>( repository )};
+  }
 }

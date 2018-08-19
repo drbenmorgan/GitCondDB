@@ -185,6 +185,9 @@ def create_mini_repo(path):
     call(['git', 'commit', '-m', 'message 2'], cwd=path, env=env)
     call(['git', 'tag', 'v1'], cwd=path, env=env)
 
+    with open(join(path, 'TheDir', 'TheFile.txt'), 'w') as f:
+        f.write('some uncommitted data\n')
+
     if exists(path + '.git'):
         rmtree(path + '.git')
     call(['git', 'clone', '--mirror', path, path + '.git'])

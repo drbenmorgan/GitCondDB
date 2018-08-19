@@ -53,6 +53,7 @@ configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
 
 target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
 target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
+target_link_libraries(GitCondDB PUBLIC stdc++fs)
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
 set_property(TARGET GitCondDB PROPERTY SOVERSION 1)
