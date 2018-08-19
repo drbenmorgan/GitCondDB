@@ -24,7 +24,7 @@ namespace GitCondDB
   namespace Helpers
   {
     std::tuple<std::string, CondDB::IOV> get_key_iov( const std::string& data, const CondDB::time_point_t t,
-                                                      const CondDB::IOV boundary = {} )
+                                                      const CondDB::IOV& boundary = {} )
     {
       std::tuple<std::string, CondDB::IOV> out;
       auto& key   = std::get<0>( out );

@@ -143,6 +143,8 @@ def lhcb_conddb_case(path):
 def create_mini_repo(path):
     if exists(path):
         rmtree(path)
+    env = dict(os.environ)
+
     call(['git', 'init', path])
     call(
         ['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
@@ -157,10 +159,31 @@ def create_mini_repo(path):
     makedirs(join(path, 'TheDir'))
     with open(join(path, 'TheDir', 'TheFile.txt'), 'w') as f:
         f.write('some data\n')
+
+    makedirs(join(path, 'Cond', 'group'))
+    with open(join(path, 'Cond', 'IOVs'), 'w') as f:
+        f.write('0 v0\n100 group\n')
+    with open(join(path, 'Cond', 'group', 'IOVs'), 'w') as f:
+        f.write('50 ../v1\n')
+    with open(join(path, 'Cond', 'v0'), 'w') as f:
+        f.write('data 0')
+    with open(join(path, 'Cond', 'v1'), 'w') as f:
+        f.write('data 1')
+
     call(['git', 'add', '.'], cwd=path)
-    env = dict(os.environ)
-    env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
+    env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225100'
     call(['git', 'commit', '-m', 'message 1'], cwd=path, env=env)
+    call(['git', 'tag', 'v0'], cwd=path, env=env)
+
+    with open(join(path, 'Cond', 'IOVs'), 'w') as f:
+        f.write('0 v0\n100 group\n200 v2\n')
+    with open(join(path, 'Cond', 'v2'), 'w') as f:
+        f.write('data 2')
+
+    call(['git', 'add', '.'], cwd=path)
+    env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
+    call(['git', 'commit', '-m', 'message 2'], cwd=path, env=env)
+    call(['git', 'tag', 'v1'], cwd=path, env=env)
 
     if exists(path + '.git'):
         rmtree(path + '.git')

@@ -46,6 +46,7 @@ namespace GitCondDB
 
         constexpr static time_point_t min() { return std::numeric_limits<time_point_t>::min(); }
         constexpr static time_point_t max() { return std::numeric_limits<time_point_t>::max(); }
+
         IOV& cut( const IOV& boundary )
         {
           since = std::max( since, boundary.since );
@@ -74,7 +75,9 @@ namespace GitCondDB
 
       AccessGuard scoped_connection() const { return AccessGuard( *this ); }
 
-      std::tuple<std::string, IOV> get( const Key& key ) const;
+      std::tuple<std::string, IOV> get( const Key& key ) const { return get( key, {} ); }
+
+      std::tuple<std::string, IOV> get( const Key& key, const IOV& bounds ) const;
 
       std::chrono::system_clock::time_point commit_time( const std::string& commit_id ) const;
 
