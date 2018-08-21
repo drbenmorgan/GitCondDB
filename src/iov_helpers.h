@@ -53,6 +53,28 @@ namespace GitCondDB
       }
       return out;
     }
+
+    std::vector<std::pair<CondDB::IOV, std::string>> parse_IOVs_keys( const std::string& data )
+    {
+      std::vector<std::pair<CondDB::IOV, std::string>> out;
+      std::string line;
+
+      CondDB::time_point_t bound;
+      std::string          key;
+
+      std::istringstream stream{data};
+
+      while ( std::getline( stream, line ) ) {
+        std::istringstream is{line};
+        is >> bound >> key;
+        if ( LIKELY( !out.empty() ) ) {
+          out.back().first.until = bound;
+        }
+        out.emplace_back( CondDB::IOV{bound, CondDB::IOV::max()}, std::move( key ) );
+      }
+
+      return out;
+    }
   }
 }
 

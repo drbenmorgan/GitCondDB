@@ -17,6 +17,7 @@
 #include <limits>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 namespace GitCondDB
 {
@@ -88,11 +89,21 @@ namespace GitCondDB
 
       std::chrono::system_clock::time_point commit_time( const std::string& commit_id ) const;
 
+      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path ) const
+      {
+        return iov_boundaries( tag, path, {} );
+      }
+      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path,
+                                                const IOV& boundaries ) const;
+
       CondDB( CondDB&& ) = default;
       ~CondDB();
 
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
+
+      void iov_boundaries_accumulate( const std::string& object_id, const IOV&  limits,
+                                      std::vector<std::pair<IOV, std::string>>& acc ) const;
 
       std::unique_ptr<details::DBImpl> m_impl;
 
