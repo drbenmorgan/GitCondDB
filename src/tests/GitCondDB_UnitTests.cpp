@@ -42,6 +42,7 @@ void access_test( const details::GitDBImpl& db )
     auto cont = std::get<1>( db.get( "HEAD:" ) );
 
     std::vector<std::string> expected{"Cond", "TheDir"};
+    sort( begin( cont.dirs ), end( cont.dirs ) );
     EXPECT_EQ( cont.dirs, expected );
     EXPECT_EQ( cont.files, std::vector<std::string>{} );
     EXPECT_EQ( cont.root, "" );
@@ -96,7 +97,8 @@ TEST( FSImpl, Access )
   {
     auto cont = std::get<1>( db.get( "HEAD:" ) );
 
-    std::vector<std::string> expected{"Cond", ".git", "TheDir"};
+    std::vector<std::string> expected{".git", "Cond", "TheDir"};
+    sort( begin( cont.dirs ), end( cont.dirs ) );
     EXPECT_EQ( cont.dirs, expected );
     EXPECT_EQ( cont.files, std::vector<std::string>{} );
     EXPECT_EQ( cont.root, "" );
