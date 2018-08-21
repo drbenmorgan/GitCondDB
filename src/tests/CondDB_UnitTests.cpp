@@ -110,14 +110,20 @@ TEST( CondDB, IOVAccess )
   {
     auto[data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
-    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 2" );
   }
   {
     auto[data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
-    EXPECT_EQ( data, "data 2" );
+    EXPECT_EQ( data, "data 3" );
   }
 
   // for attempt of invalid retrieval
@@ -156,14 +162,20 @@ TEST( CondDB, IOVAccess_FS )
   {
     auto[data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
-    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 2" );
   }
   {
     auto[data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
-    EXPECT_EQ( data, "data 2" );
+    EXPECT_EQ( data, "data 3" );
   }
 
   // for attempt of invalid retrieval
