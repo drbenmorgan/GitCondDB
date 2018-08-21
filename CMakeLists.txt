@@ -43,7 +43,7 @@ include(GenerateExportHeader)
 # Build instructions
 
 set(HEAERS include/GitCondDB.h)
-set(SOURCES src/helpers.h src/DBImpl.h src/GitCondDB.cpp)
+set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/GitCondDB.cpp)
 
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)
@@ -53,6 +53,7 @@ configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
 
 target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
 target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
+target_link_libraries(GitCondDB PUBLIC stdc++fs)
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
 set_property(TARGET GitCondDB PROPERTY SOVERSION 1)
