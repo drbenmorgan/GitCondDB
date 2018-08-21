@@ -24,14 +24,14 @@ namespace GitCondDB
   namespace Helpers
   {
     std::tuple<std::string, CondDB::IOV> get_key_iov( const std::string& data, const CondDB::time_point_t t,
-                                                      const CondDB::IOV& boundary = {} )
+                                                      const CondDB::IOV& boundaries = {} )
     {
       std::tuple<std::string, CondDB::IOV> out;
       auto& key   = std::get<0>( out );
       auto& since = std::get<1>( out ).since;
       auto& until = std::get<1>( out ).until;
 
-      if ( UNLIKELY( t < boundary.since || t >= boundary.until ) ) {
+      if ( UNLIKELY( t < boundaries.since || t >= boundaries.until ) ) {
         since = until = 0;
       } else {
         CondDB::time_point_t current = 0;
@@ -49,7 +49,7 @@ namespace GitCondDB
           is >> key;
           since = current; // the time we read is the "since" for the read key
         }
-        std::get<1>( out ).cut( boundary );
+        std::get<1>( out ).cut( boundaries );
       }
       return out;
     }
