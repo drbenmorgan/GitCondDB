@@ -13,7 +13,7 @@
 
 #include <GitCondDB.h>
 
-#include "helpers.h"
+#include "common.h"
 
 #include <sstream>
 #include <string>

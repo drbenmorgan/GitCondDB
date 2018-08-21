@@ -24,7 +24,9 @@ namespace fs = std::experimental::filesystem;
 #include <fstream>
 #include <variant>
 
-#include "helpers.h"
+#include "git_helpers.h"
+
+#include "common.h"
 
 namespace GitCondDB
 {
@@ -69,13 +71,13 @@ namespace GitCondDB
         }
       };
 
-      class GitDBImpl : public DBImpl
+      class GitImpl : public DBImpl
       {
         using git_object_ptr     = GitCondDB::Helpers::git_object_ptr;
         using git_repository_ptr = GitCondDB::Helpers::git_repository_ptr;
 
       public:
-        GitDBImpl( std::string_view repository )
+        GitImpl( std::string_view repository )
             : m_repository_url( repository ), m_repository{[this]() -> git_repository_ptr::storage_t {
               auto res = git_call<git_repository_ptr::storage_t>( "cannot open repository", m_repository_url,
                                                                   git_repository_open, m_repository_url.c_str() );
@@ -90,7 +92,7 @@ namespace GitCondDB
           m_repository.get();
         }
 
-        ~GitDBImpl() override
+        ~GitImpl() override
         {
           // Finalize Git library
           git_libgit2_shutdown();

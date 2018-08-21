@@ -43,7 +43,7 @@ include(GenerateExportHeader)
 # Build instructions
 
 set(HEAERS include/GitCondDB.h)
-set(SOURCES src/helpers.h src/iov_helpers.h src/DBImpl.h src/GitCondDB.cpp)
+set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/GitCondDB.cpp)
 
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)

@@ -130,8 +130,8 @@ CondDB GitCondDB::v1::connect( std::string_view repository )
   if ( repository.substr( 0, 5 ) == "file:" ) {
     return {std::make_unique<details::FilesystemImpl>( repository.substr( 5 ) )};
   } else if ( repository.substr( 0, 4 ) == "git:" ) {
-    return {std::make_unique<details::GitDBImpl>( repository.substr( 4 ) )};
+    return {std::make_unique<details::GitImpl>( repository.substr( 4 ) )};
   } else {
-    return {std::make_unique<details::GitDBImpl>( repository )};
+    return {std::make_unique<details::GitImpl>( repository )};
   }
 }

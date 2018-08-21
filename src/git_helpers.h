@@ -1,5 +1,5 @@
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef GIT_HELPERS_H
+#define GIT_HELPERS_H
 /*****************************************************************************\
 * (c) Copyright 2018 CERN for the benefit of the LHCb Collaboration           *
 *                                                                             *
@@ -17,17 +17,6 @@
 #include <memory>
 #include <mutex>
 #include <string>
-
-// -------------- LIKELY/UNLIKELY macros (begin)
-// Use compiler hinting to improve branch prediction for linux
-#ifdef __GNUC__
-#define LIKELY( x ) __builtin_expect( ( x ), 1 )
-#define UNLIKELY( x ) __builtin_expect( ( x ), 0 )
-#else
-#define LIKELY( x ) x
-#define UNLIKELY( x ) x
-#endif
-// -------------- LIKELY/UNLIKELY macros (end)
 
 namespace GitCondDB
 {
@@ -87,4 +76,4 @@ namespace GitCondDB
     };
   }
 }
-#endif // HELPERS_H
+#endif // GIT_HELPERS_H

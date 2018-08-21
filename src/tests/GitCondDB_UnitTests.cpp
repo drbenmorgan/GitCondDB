@@ -18,9 +18,9 @@
 
 using namespace GitCondDB::v1;
 
-TEST( GitDBImpl, Connection )
+TEST( GitImpl, Connection )
 {
-  details::GitDBImpl db{"test_data/repo.git"};
+  details::GitImpl db{"test_data/repo.git"};
   EXPECT_TRUE( db.connected() );
   db.disconnect();
   EXPECT_FALSE( db.connected() );
@@ -28,7 +28,7 @@ TEST( GitDBImpl, Connection )
   EXPECT_TRUE( db.connected() );
 }
 
-void access_test( const details::GitDBImpl& db )
+void access_test( const details::GitImpl& db )
 {
   EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "some data\n" );
 
@@ -57,19 +57,19 @@ void access_test( const details::GitDBImpl& db )
   EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
 }
 
-TEST( GitDBImpl, Access ) { access_test( details::GitDBImpl{"test_data/repo"} ); }
+TEST( GitImpl, Access ) { access_test( details::GitImpl{"test_data/repo"} ); }
 
-TEST( GitDBImpl, FailAccess )
+TEST( GitImpl, FailAccess )
 {
   try {
-    access_test( details::GitDBImpl{"test_data/no-repo"} );
+    access_test( details::GitImpl{"test_data/no-repo"} );
     FAIL() << "exception expected for invalid db";
   } catch ( std::runtime_error& err ) {
     EXPECT_EQ( std::string_view{err.what()}.substr( 0, 22 ), "cannot open repository" );
   }
 }
 
-TEST( GitDBImpl, AccessBare ) { access_test( details::GitDBImpl{"test_data/repo.git"} ); }
+TEST( GitImpl, AccessBare ) { access_test( details::GitImpl{"test_data/repo.git"} ); }
 
 TEST( FSImpl, Connection )
 {
