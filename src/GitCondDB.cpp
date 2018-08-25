@@ -53,6 +53,8 @@ namespace
     return path.substr( path.rfind( '/' ) + 1 );
   }
 
+  std::string format_obj_id( const CondDB::Key& key ) { return key.tag + ':' + normalize( key.path ); }
+
   // note: copied from DetCond/src/component/CondDBCommon.cpp
   std::string generateXMLCatalog( const details::dir_content& content )
   {
@@ -89,8 +91,8 @@ namespace
 
 std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bounds ) const
 {
-  std::string object_id = key.tag + ":" + normalize( key.path );
-  auto        data      = m_impl->get( object_id.c_str() );
+  const std::string object_id = format_obj_id( key );
+  auto              data      = m_impl->get( object_id.c_str() );
   if ( data.index() == 1 ) { // we got a directory
     auto& content = std::get<1>( data );
     if ( find( begin( content.files ), end( content.files ), "IOVs" ) != end( content.files ) ) {
