@@ -21,12 +21,14 @@ namespace fs = std::filesystem;
 namespace fs = std::experimental::filesystem;
 #endif
 
-#include <fstream>
-#include <variant>
-
 #include "git_helpers.h"
 
 #include "common.h"
+
+#include <fstream>
+#include <variant>
+
+#include <nlohmann/json.hpp>
 
 namespace GitCondDB
 {
@@ -162,7 +164,7 @@ namespace GitCondDB
       public:
         FilesystemImpl( std::string_view root ) : m_root( root )
         {
-          if ( !is_directory( m_root ) ) throw std::runtime_error( "invalid path " + m_root.string() );
+          if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
 
         void disconnect() const override {}
@@ -190,7 +192,8 @@ namespace GitCondDB
             }
 
             out = std::move( entries );
-          } else {
+          } else if ( is_regular_file( path ) ) {
+
             std::ifstream stream{path.string()};
             stream.seekg( 0, stream.end );
             const auto size = stream.tellg();
@@ -200,6 +203,8 @@ namespace GitCondDB
             stream.read( data.data(), size );
 
             out = std::move( data );
+          } else {
+            throw std::runtime_error{std::string{"cannot resolve object "} + object_id};
           }
           return out;
         }
@@ -213,6 +218,74 @@ namespace GitCondDB
         inline fs::path to_path( std::string_view object_id ) const { return m_root / strip_tag( object_id ); }
 
         fs::path m_root;
+      };
+
+      class JSONImpl : public DBImpl
+      {
+        using json = nlohmann::json;
+
+      public:
+        JSONImpl( std::string_view data )
+        {
+          if ( data.find_first_of( '{' ) != data.npos ) {
+            m_json = json::parse( data );
+          } else if ( is_regular_file( fs::path( data ) ) ) {
+            std::ifstream stream{std::string{data}};
+            stream >> m_json;
+          } else {
+            throw std::runtime_error{"invalid JSON"};
+          }
+        }
+
+        void disconnect() const override {}
+
+        bool connected() const override { return true; }
+
+        bool exists( const char* object_id ) const override
+        {
+          // return true for any tag name (i.e. id without a ':') and existing paths
+          const std::string_view id{object_id};
+          return id.find_first_of( ':' ) == id.npos || !m_json.value( to_path( object_id ), json{} ).is_null();
+        }
+
+        std::variant<std::string, dir_content> get( const char* object_id ) const override
+        {
+          std::variant<std::string, dir_content> out;
+
+          auto obj = m_json.value( to_path( object_id ), json{} );
+
+          if ( UNLIKELY( obj.is_null() ) ) {
+            throw std::runtime_error{std::string{"cannot resolve object "} + object_id};
+          } else if ( obj.is_object() ) {
+            dir_content entries;
+
+            entries.root = strip_tag( object_id );
+
+            // for(const auto& elem: )
+            for ( auto it = obj.begin(); it != obj.end(); ++it ) {
+              ( it.value().is_object() ? entries.dirs : entries.files ).emplace_back( it.key() );
+            }
+
+            out = std::move( entries );
+          } else if ( LIKELY( obj.is_string() ) ) {
+            out = std::string{obj};
+          }
+          return out;
+        }
+
+        std::chrono::system_clock::time_point commit_time( const char* ) const override
+        {
+          return std::chrono::time_point<std::chrono::system_clock>::max();
+        }
+
+      private:
+        inline json::json_pointer to_path( std::string_view object_id ) const
+        {
+          const auto path = strip_tag( object_id );
+          return json::json_pointer{path.empty() ? std::string{} : std::string{'/'} + std::string{path}};
+        }
+
+        json m_json;
       };
     }
   }
