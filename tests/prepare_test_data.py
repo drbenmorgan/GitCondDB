@@ -193,6 +193,16 @@ def create_mini_repo(path):
     call(['git', 'clone', '--mirror', path, path + '.git'])
 
 
+def write_json_files(path):
+    from json import dump
+    if not isdir(path):
+        os.makedirs(path)
+    with open(join(path, 'minimal.json'), 'w') as f:
+        dump({}, f)
+    with open(join(path, 'basic.json'), 'w') as f:
+        dump({"TheDir": {"TheFile.txt": "some JSON (file) data\n"}}, f)
+
+
 def main():
     level = (logging.DEBUG
              if ('--debug' in sys.argv or os.environ.get('VERBOSE')) else
@@ -206,6 +216,8 @@ def main():
     lhcb_conddb_case(join('test_data', 'lhcb', 'repo'))
 
     create_mini_repo(join('test_data', 'repo'))
+
+    write_json_files(join('test_data', 'json'))
 
 
 if __name__ == '__main__':

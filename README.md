@@ -20,3 +20,4 @@ Software projects:
 
 Libraries:
 - [libgit2](https://libgit2.org/) for the Git backend
+- [JSON for Modern C++](https://nlohmann.github.io/json) for the JSON backend
