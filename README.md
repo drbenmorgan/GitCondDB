@@ -16,7 +16,7 @@ Software projects:
 - [Google Test](https://github.com/google/googletest) for unit testing
 - [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) for C++ code formatting
 - [YAPF](https://github.com/google/yapf) for Python code formatting
-- [LCOV](http://ltp.sourceforge.net/coverage/lcov.php) for test coverage reports
+- [LCOV](https://github.com/linux-test-project/lcov) for test coverage reports
 
 Libraries:
 - [libgit2](https://libgit2.org/) for the Git backend
