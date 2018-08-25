@@ -54,6 +54,13 @@ void access_test( const details::GitImpl& db )
     EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
   }
 
+  try {
+    db.get( "HEAD:Nothing" );
+    FAIL() << "exception expected for invalid path";
+  } catch ( std::runtime_error& err ) {
+    EXPECT_EQ( std::string_view{err.what()}.substr( 0, 34 ), "cannot resolve object HEAD:Nothing" );
+  }
+
   EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
 }
 
@@ -62,7 +69,7 @@ TEST( GitImpl, Access ) { access_test( details::GitImpl{"test_data/repo"} ); }
 TEST( GitImpl, FailAccess )
 {
   try {
-    access_test( details::GitImpl{"test_data/no-repo"} );
+    details::GitImpl{"test_data/no-repo"};
     FAIL() << "exception expected for invalid db";
   } catch ( std::runtime_error& err ) {
     EXPECT_EQ( std::string_view{err.what()}.substr( 0, 22 ), "cannot open repository" );
@@ -108,6 +115,13 @@ TEST( FSImpl, Access )
     EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
     EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
     EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
+  }
+
+  try {
+    db.get( "HEAD:Nothing" );
+    FAIL() << "exception expected for invalid path";
+  } catch ( std::runtime_error& err ) {
+    EXPECT_EQ( std::string_view{err.what()}, "cannot resolve object HEAD:Nothing" );
   }
 
   EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );

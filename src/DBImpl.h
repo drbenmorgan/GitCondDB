@@ -162,7 +162,7 @@ namespace GitCondDB
       public:
         FilesystemImpl( std::string_view root ) : m_root( root )
         {
-          if ( !is_directory( m_root ) ) throw std::runtime_error( "invalid path " + m_root.string() );
+          if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
 
         void disconnect() const override {}
@@ -190,7 +190,8 @@ namespace GitCondDB
             }
 
             out = std::move( entries );
-          } else {
+          } else if ( is_regular_file( path ) ) {
+
             std::ifstream stream{path.string()};
             stream.seekg( 0, stream.end );
             const auto size = stream.tellg();
@@ -200,6 +201,8 @@ namespace GitCondDB
             stream.read( data.data(), size );
 
             out = std::move( data );
+          } else {
+            throw std::runtime_error{std::string{"cannot resolve object "} + object_id};
           }
           return out;
         }
