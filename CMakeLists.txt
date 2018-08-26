@@ -181,15 +181,6 @@ if(NOT GTEST_FOUND)
 endif()
 
 
-include(GoogleTest)
-add_executable(test_GitCondDB src/tests/GitCondDB_UnitTests.cpp)
-target_include_directories(test_GitCondDB PRIVATE include src)
-target_link_libraries(test_GitCondDB GitCondDB ${git2_LIBRARIES} GTest::GTest GTest::Main)
-if(TARGET googletest-distribution)
-  add_dependencies(test_GitCondDB googletest-distribution)
-endif()
-gtest_discover_tests(test_GitCondDB)
-
 # - prepare test repositories
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
   find_package(Python REQUIRED COMPONENTS Interpreter)
@@ -208,7 +199,20 @@ add_custom_command(
 
 add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
 
-add_dependencies(test_GitCondDB TestData)
+# - unit test executables
+include(GoogleTest)
+
+foreach(subsystem CondDB  FS  Git  Helpers  JSON)
+  add_executable(test_${subsystem} src/tests/${subsystem}_UnitTests.cpp)
+  target_include_directories(test_${subsystem} PRIVATE include src)
+  target_link_libraries(test_${subsystem} GitCondDB ${git2_LIBRARIES} GTest::GTest GTest::Main)
+  if(TARGET googletest-distribution)
+    add_dependencies(test_${subsystem} googletest-distribution)
+  endif()
+  gtest_discover_tests(test_${subsystem})
+  add_dependencies(test_${subsystem} TestData)
+endforeach()
+
 
 # - coverage reports
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
@@ -220,7 +224,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
       COMMENT "Cleaning coverage statistics")
     add_custom_target(generate-coverage-report
       COMMAND ${lcov_COMMAND} --quiet --capture --directory . --output-file coverage.info
-      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '${CMAKE_SOURCE_DIR}/src/tests/GitCondDB_UnitTests.cpp'
+      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '${CMAKE_SOURCE_DIR}/src/tests/*_UnitTests.cpp'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")

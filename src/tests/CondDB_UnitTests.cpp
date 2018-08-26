@@ -18,188 +18,7 @@
 
 using namespace GitCondDB::v1;
 
-TEST( GitImpl, Connection )
-{
-  details::GitImpl db{"test_data/repo.git"};
-  EXPECT_TRUE( db.connected() );
-  db.disconnect();
-  EXPECT_FALSE( db.connected() );
-  EXPECT_TRUE( db.exists( "HEAD" ) );
-  EXPECT_TRUE( db.connected() );
-}
-
-void access_test( const details::GitImpl& db )
-{
-  EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "some data\n" );
-
-  {
-    auto cont = std::get<1>( db.get( "HEAD:TheDir" ) );
-    EXPECT_EQ( cont.dirs, std::vector<std::string>{} );
-    EXPECT_EQ( cont.files, std::vector<std::string>{"TheFile.txt"} );
-    EXPECT_EQ( cont.root, "TheDir" );
-  }
-  {
-    auto cont = std::get<1>( db.get( "HEAD:" ) );
-
-    std::vector<std::string> expected{"Cond", "TheDir"};
-    sort( begin( cont.dirs ), end( cont.dirs ) );
-    EXPECT_EQ( cont.dirs, expected );
-    EXPECT_EQ( cont.files, std::vector<std::string>{} );
-    EXPECT_EQ( cont.root, "" );
-  }
-
-  {
-    EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
-    EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
-    EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
-  }
-
-  try {
-    db.get( "HEAD:Nothing" );
-    FAIL() << "exception expected for invalid path";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}.substr( 0, 34 ), "cannot resolve object HEAD:Nothing" );
-  }
-
-  EXPECT_EQ( std::chrono::system_clock::to_time_t( db.commit_time( "HEAD" ) ), 1483225200 );
-}
-
-TEST( GitImpl, Access ) { access_test( details::GitImpl{"test_data/repo"} ); }
-
-TEST( GitImpl, FailAccess )
-{
-  try {
-    details::GitImpl{"test_data/no-repo"};
-    FAIL() << "exception expected for invalid db";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}.substr( 0, 22 ), "cannot open repository" );
-  }
-}
-
-TEST( GitImpl, AccessBare ) { access_test( details::GitImpl{"test_data/repo.git"} ); }
-
-TEST( FSImpl, Connection )
-{
-  details::FilesystemImpl db{"test_data/repo"};
-  EXPECT_TRUE( db.connected() );
-  db.disconnect();
-  EXPECT_TRUE( db.connected() );
-  EXPECT_TRUE( db.exists( "HEAD" ) );
-  EXPECT_TRUE( db.connected() );
-}
-
-TEST( FSImpl, Access )
-{
-  details::FilesystemImpl db{"test_data/repo"};
-
-  EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "some uncommitted data\n" );
-  EXPECT_EQ( std::get<0>( db.get( "foobar:TheDir/TheFile.txt" ) ), "some uncommitted data\n" );
-
-  {
-    auto cont = std::get<1>( db.get( "HEAD:TheDir" ) );
-    EXPECT_EQ( cont.dirs, std::vector<std::string>{} );
-    EXPECT_EQ( cont.files, std::vector<std::string>{"TheFile.txt"} );
-    EXPECT_EQ( cont.root, "TheDir" );
-  }
-  {
-    auto cont = std::get<1>( db.get( "HEAD:" ) );
-
-    std::vector<std::string> expected{".git", "Cond", "TheDir"};
-    sort( begin( cont.dirs ), end( cont.dirs ) );
-    EXPECT_EQ( cont.dirs, expected );
-    EXPECT_EQ( cont.files, std::vector<std::string>{} );
-    EXPECT_EQ( cont.root, "" );
-  }
-
-  {
-    EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
-    EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
-    EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
-  }
-
-  try {
-    db.get( "HEAD:Nothing" );
-    FAIL() << "exception expected for invalid path";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}, "cannot resolve object HEAD:Nothing" );
-  }
-
-  EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
-}
-
-TEST( JSONImpl, Connection )
-{
-  {
-    details::JSONImpl db{"test_data/json/minimal.json"};
-  }
-  details::JSONImpl db{"{}"};
-  EXPECT_TRUE( db.connected() );
-  db.disconnect();
-  EXPECT_TRUE( db.connected() );
-  EXPECT_TRUE( db.exists( "HEAD" ) );
-  EXPECT_TRUE( db.connected() );
-}
-
-TEST( JSONImpl, FailAccess )
-{
-  try {
-    details::JSONImpl{"test_data/json/no-file"};
-    FAIL() << "exception expected for invalid db";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}, "invalid JSON" );
-  }
-}
-
-TEST( JSONImpl, AccessMemory )
-{
-  details::JSONImpl db{
-      R"({
-      "TheDir": {
-        "TheFile.txt": "JSON data\n"
-      },
-      "Cond": {
-        "IOVs": "0 a\n100 b\n",
-        "a": "data a",
-        "b": "data b"
-      }
-    })"};
-
-  EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "JSON data\n" );
-  EXPECT_EQ( std::get<0>( db.get( "foobar:TheDir/TheFile.txt" ) ), "JSON data\n" );
-
-  {
-    auto cont = std::get<1>( db.get( "HEAD:TheDir" ) );
-    EXPECT_EQ( cont.dirs, std::vector<std::string>{} );
-    EXPECT_EQ( cont.files, std::vector<std::string>{"TheFile.txt"} );
-    EXPECT_EQ( cont.root, "TheDir" );
-  }
-  {
-    auto cont = std::get<1>( db.get( "HEAD:" ) );
-
-    std::vector<std::string> expected{"Cond", "TheDir"};
-    sort( begin( cont.dirs ), end( cont.dirs ) );
-    EXPECT_EQ( cont.dirs, expected );
-    EXPECT_EQ( cont.files, std::vector<std::string>{} );
-    EXPECT_EQ( cont.root, "" );
-  }
-
-  {
-    EXPECT_TRUE( db.exists( "HEAD:TheDir" ) );
-    EXPECT_TRUE( db.exists( "HEAD:TheDir/TheFile.txt" ) );
-    EXPECT_FALSE( db.exists( "HEAD:NoFile" ) );
-  }
-
-  try {
-    db.get( "HEAD:Nothing" );
-    FAIL() << "exception expected for invalid path";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}, "cannot resolve object HEAD:Nothing" );
-  }
-
-  EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
-}
-
-TEST( GitCondDB, Connection )
+TEST( CondDB, Connection )
 {
   CondDB db = connect( "test_data/repo.git" );
 
@@ -220,7 +39,7 @@ TEST( GitCondDB, Connection )
   EXPECT_FALSE( db.connected() );
 }
 
-TEST( GitCondDB, Access )
+TEST( CondDB, Access )
 {
   {
     CondDB db = connect( "test_data/repo.git" );
@@ -251,67 +70,7 @@ TEST( GitCondDB, Access )
   }
 }
 
-TEST( IOVHelpers, ParseIOVs )
-{
-  using GitCondDB::Helpers::get_key_iov;
-
-  const std::string test_data{"0 a\n"
-                              "100 b\n"
-                              "200 c\n"
-                              "300 d\n"};
-
-  {
-    auto[key, iov] = get_key_iov( test_data, 0 );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "a" );
-    EXPECT_EQ( iov.since, 0 );
-    EXPECT_EQ( iov.until, 100 );
-  }
-  {
-    auto[key, iov] = get_key_iov( test_data, 100 );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "b" );
-    EXPECT_EQ( iov.since, 100 );
-    EXPECT_EQ( iov.until, 200 );
-  }
-  {
-    auto[key, iov] = get_key_iov( test_data, 230 );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "c" );
-    EXPECT_EQ( iov.since, 200 );
-    EXPECT_EQ( iov.until, 300 );
-  }
-  {
-    auto[key, iov] = get_key_iov( test_data, 500 );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "d" );
-    EXPECT_EQ( iov.since, 300 );
-    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
-  }
-
-  {
-    auto[key, iov] = get_key_iov( test_data, 240, {210, 1000} );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "c" );
-    EXPECT_EQ( iov.since, 210 );
-    EXPECT_EQ( iov.until, 300 );
-  }
-  {
-    auto[key, iov] = get_key_iov( test_data, 500, {210, 1000} );
-    EXPECT_TRUE( iov.valid() );
-    EXPECT_EQ( key, "d" );
-    EXPECT_EQ( iov.since, 300 );
-    EXPECT_EQ( iov.until, 1000 );
-  }
-
-  {
-    auto[key, iov] = get_key_iov( test_data, 2000, {210, 1000} );
-    EXPECT_FALSE( iov.valid() );
-    EXPECT_EQ( key, "" );
-  }
-}
-
-TEST( GitCondDB, Directory )
+TEST( CondDB, Directory )
 {
   CondDB db = connect( "test_data/lhcb/repo" );
   auto[data, iov] = db.get( {"HEAD", "Direct", 0} );
@@ -326,7 +85,7 @@ TEST( GitCondDB, Directory )
                    "</catalog></DDDB>" );
 }
 
-TEST( GitCondDB, IOVAccess )
+TEST( CondDB, IOVAccess )
 {
   CondDB db = connect( "test_data/repo" );
 
@@ -369,7 +128,7 @@ TEST( GitCondDB, IOVAccess )
   }
 }
 
-TEST( GitCondDB, Directory_FS )
+TEST( CondDB, Directory_FS )
 {
   CondDB db = connect( "file:test_data/lhcb/repo" );
   auto[data, iov] = db.get( {"dummy", "Direct", 0} );
@@ -384,7 +143,7 @@ TEST( GitCondDB, Directory_FS )
                    "</catalog></DDDB>" );
 }
 
-TEST( GitCondDB, IOVAccess_FS )
+TEST( CondDB, IOVAccess_FS )
 {
   CondDB db = connect( "file:test_data/repo" );
 
@@ -415,7 +174,7 @@ TEST( GitCondDB, IOVAccess_FS )
   }
 }
 
-TEST( GitCondDB, IOVAccess_JSON )
+TEST( CondDB, IOVAccess_JSON )
 {
   CondDB db = connect( R"(json:
                        {"Cond": {"IOVs": "0 v0\n100 group\n200 v2\n",
