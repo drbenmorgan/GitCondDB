@@ -54,6 +54,12 @@ namespace GitCondDB
           return *this;
         }
         bool valid() const { return since < until; }
+        bool contains( const time_point_t point ) const { return point >= since && point < until; }
+        bool contains( const IOV& other ) const
+        {
+          return other.valid() && contains( other.since ) && other.until > since && other.until <= until;
+        }
+        bool overlaps( IOV other ) const { return other.cut( *this ).valid(); }
       };
 
       /// RAII object to limit the time the connection to the repository stay open.
