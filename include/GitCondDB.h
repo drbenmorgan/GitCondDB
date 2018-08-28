@@ -99,6 +99,12 @@ namespace GitCondDB
       CondDB( CondDB&& ) = default;
       ~CondDB();
 
+      struct dir_content {
+        std::string              root;
+        std::vector<std::string> dirs;
+        std::vector<std::string> files;
+      };
+
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
 

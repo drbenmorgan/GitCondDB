@@ -45,13 +45,9 @@ namespace GitCondDB
         return RET{tmp};
       }
 
-      struct dir_content {
-        std::string              root;
-        std::vector<std::string> dirs;
-        std::vector<std::string> files;
-      };
-
       struct DBImpl {
+        using dir_content = CondDB::dir_content;
+
         virtual ~DBImpl() = default;
 
         virtual void disconnect() const = 0;

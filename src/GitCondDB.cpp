@@ -64,7 +64,7 @@ namespace
   inline std::string format_obj_id( const CondDB::Key& key ) { return format_obj_id( key.tag, key.path ); }
 
   // note: copied from DetCond/src/component/CondDBCommon.cpp
-  std::string generateXMLCatalog( const details::dir_content& content )
+  std::string generateXMLCatalog( const CondDB::dir_content& content )
   {
     std::ostringstream xml; // buffer for the XML
 
