@@ -92,6 +92,28 @@ TEST( IOV, Validity )
   EXPECT_FALSE( bad2.valid() );
 }
 
+TEST( IOV, Intersect )
+{
+  for ( CondDB::time_point_t a : std::vector<CondDB::time_point_t>{90, 100, 110} ) {
+    for ( CondDB::time_point_t b : std::vector<CondDB::time_point_t>{190, 200, 210} ) {
+      const auto res   = IOV{100, 200}.intersect( IOV{a, b} );
+      const auto since = std::max<CondDB::time_point_t>( a, 100 );
+      const auto until = std::min<CondDB::time_point_t>( b, 200 );
+
+      EXPECT_EQ( res.since, since );
+      EXPECT_EQ( res.until, until );
+    }
+  }
+  {
+    const auto res = IOV{100, 200}.intersect( {0, 10} );
+    EXPECT_FALSE( res.valid() );
+  }
+  {
+    const auto res = IOV{100, 200}.intersect( {10, 0} );
+    EXPECT_FALSE( res.valid() );
+  }
+}
+
 TEST( IOV, Cut )
 {
   IOV iov{100, 200};
