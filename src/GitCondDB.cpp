@@ -53,6 +53,16 @@ namespace
     return path.substr( path.rfind( '/' ) + 1 );
   }
 
+  inline std::string format_obj_id( const std::string& tag, const std::string& path )
+  {
+    return tag + ':' + normalize( path );
+  }
+  inline std::string format_obj_id( const std::string_view& tag, const std::string_view& path )
+  {
+    return format_obj_id( std::string{tag}, std::string{path} );
+  }
+  inline std::string format_obj_id( const CondDB::Key& key ) { return format_obj_id( key.tag, key.path ); }
+
   // note: copied from DetCond/src/component/CondDBCommon.cpp
   std::string generateXMLCatalog( const details::dir_content& content )
   {
@@ -89,8 +99,8 @@ namespace
 
 std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bounds ) const
 {
-  std::string object_id = key.tag + ":" + normalize( key.path );
-  auto        data      = m_impl->get( object_id.c_str() );
+  const std::string object_id = format_obj_id( key );
+  auto              data      = m_impl->get( object_id.c_str() );
   if ( data.index() == 1 ) { // we got a directory
     auto& content = std::get<1>( data );
     if ( find( begin( content.files ), end( content.files ), "IOVs" ) != end( content.files ) ) {
@@ -136,4 +146,37 @@ CondDB GitCondDB::v1::connect( std::string_view repository )
   } else {
     return {std::make_unique<details::GitImpl>( repository )};
   }
+}
+
+void CondDB::iov_boundaries_accumulate( const std::string& object_id, const CondDB::IOV&  limits,
+                                        std::vector<std::pair<CondDB::IOV, std::string>>& acc ) const
+{
+  // get all iovs in the current obj_id
+  auto iovs_file = object_id + "/IOVs";
+  if ( !m_impl->exists( iovs_file.c_str() ) ) {
+    acc.emplace_back( limits, object_id );
+  } else {
+    const auto tmp = Helpers::parse_IOVs_keys( std::get<0>( m_impl->get( iovs_file.c_str() ) ) );
+    std::for_each( begin( tmp ), end( tmp ), [&acc, &object_id, &limits, this]( const auto& entry ) {
+      if ( limits.overlaps( entry.first ) )
+        iov_boundaries_accumulate( normalize( object_id + '/' + entry.second ), limits.intersect( entry.first ), acc );
+    } );
+  }
+}
+
+std::vector<CondDB::time_point_t> CondDB::iov_boundaries( std::string_view tag, std::string_view path,
+                                                          const IOV& boundaries ) const
+{
+  std::vector<CondDB::time_point_t> out;
+
+  const auto object_id = format_obj_id( tag, path );
+
+  if ( UNLIKELY( !boundaries.valid() || !m_impl->exists( object_id.c_str() ) ) ) return out;
+
+  std::vector<std::pair<CondDB::IOV, std::string>> tmp;
+  iov_boundaries_accumulate( object_id, boundaries, tmp );
+  std::transform( begin( tmp ), end( tmp ), back_inserter( out ),
+                  []( const auto& entry ) { return entry.first.since; } );
+
+  return out;
 }

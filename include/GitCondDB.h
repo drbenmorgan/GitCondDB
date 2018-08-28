@@ -17,6 +17,7 @@
 #include <limits>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 namespace GitCondDB
 {
@@ -47,13 +48,19 @@ namespace GitCondDB
         constexpr static time_point_t min() { return std::numeric_limits<time_point_t>::min(); }
         constexpr static time_point_t max() { return std::numeric_limits<time_point_t>::max(); }
 
-        IOV& cut( const IOV& boundary )
+        IOV intersect( const IOV& boundary ) const
         {
-          since = std::max( since, boundary.since );
-          until = std::min( until, boundary.until );
-          return *this;
+          return {std::max( since, boundary.since ), std::min( until, boundary.until )};
         }
+        IOV& cut( const IOV& boundary ) { return *this = boundary.intersect( *this ); }
+
         bool valid() const { return since < until; }
+        bool contains( const time_point_t point ) const { return point >= since && point < until; }
+        bool contains( const IOV& other ) const
+        {
+          return other.valid() && contains( other.since ) && other.until > since && other.until <= until;
+        }
+        bool overlaps( const IOV& other ) const { return other.intersect( *this ).valid(); }
       };
 
       /// RAII object to limit the time the connection to the repository stay open.
@@ -82,11 +89,21 @@ namespace GitCondDB
 
       std::chrono::system_clock::time_point commit_time( const std::string& commit_id ) const;
 
+      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path ) const
+      {
+        return iov_boundaries( tag, path, {} );
+      }
+      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path,
+                                                const IOV& boundaries ) const;
+
       CondDB( CondDB&& ) = default;
       ~CondDB();
 
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
+
+      void iov_boundaries_accumulate( const std::string& object_id, const IOV&  limits,
+                                      std::vector<std::pair<IOV, std::string>>& acc ) const;
 
       std::unique_ptr<details::DBImpl> m_impl;
 

@@ -110,14 +110,20 @@ TEST( CondDB, IOVAccess )
   {
     auto[data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
-    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 2" );
   }
   {
     auto[data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
-    EXPECT_EQ( data, "data 2" );
+    EXPECT_EQ( data, "data 3" );
   }
 
   // for attempt of invalid retrieval
@@ -125,6 +131,51 @@ TEST( CondDB, IOVAccess )
     auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( data, "" );
+  }
+}
+
+TEST( CondDB, GetIOVs )
+{
+  {
+    CondDB db = connect( "test_data/repo" );
+
+    std::vector<CondDB::time_point_t> expected{0, 100, 150, 200};
+
+    EXPECT_EQ( db.iov_boundaries( "v1", "Cond" ), expected );
+  }
+  {
+    CondDB db = connect( R"(json:{
+                         "Cond": {
+                           "IOVs": "0 a\n100 level1\n200 b\n",
+                           "level1": {
+                             "IOVs": "50 i\n150 level2\n300 k\n",
+                             "level2": {
+                               "IOVs": "150 x\n170 y\n"
+                             }
+                           }
+                         }
+                         })" );
+
+    std::vector<CondDB::time_point_t> expected{0, 100, 150, 170, 200};
+
+    EXPECT_EQ( db.iov_boundaries( "", "Cond" ), expected );
+  }
+  {
+    CondDB db = connect( R"(json:{
+                          "Cond": {
+                            "IOVs": "0 a\n100 levelA\n200 b\n",
+                            "levelA": {
+                              "IOVs": "50 i\n150 ../levelB\n300 k\n"
+                            },
+                            "levelB": {
+                              "IOVs": "150 x\n170 y\n"
+                            }
+                          }
+                          })" );
+
+    std::vector<CondDB::time_point_t> expected{0, 100, 150, 170, 200};
+
+    EXPECT_EQ( db.iov_boundaries( "", "Cond" ), expected );
   }
 }
 
@@ -156,14 +207,20 @@ TEST( CondDB, IOVAccess_FS )
   {
     auto[data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
-    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 2" );
   }
   {
     auto[data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
-    EXPECT_EQ( data, "data 2" );
+    EXPECT_EQ( data, "data 3" );
   }
 
   // for attempt of invalid retrieval

@@ -176,9 +176,13 @@ def create_mini_repo(path):
     call(['git', 'tag', 'v0'], cwd=path, env=env)
 
     with open(join(path, 'Cond', 'IOVs'), 'w') as f:
-        f.write('0 v0\n100 group\n200 v2\n')
+        f.write('0 v0\n100 group\n200 v3\n')
+    with open(join(path, 'Cond', 'group', 'IOVs'), 'w') as f:
+        f.write('50 ../v1\n150 ../v2\n')
     with open(join(path, 'Cond', 'v2'), 'w') as f:
         f.write('data 2')
+    with open(join(path, 'Cond', 'v3'), 'w') as f:
+        f.write('data 3')
 
     call(['git', 'add', '.'], cwd=path)
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
