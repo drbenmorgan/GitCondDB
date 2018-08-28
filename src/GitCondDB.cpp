@@ -20,16 +20,11 @@
 #include <sstream>
 #include <tuple>
 
+#include <nlohmann/json.hpp>
+
 #include <cassert>
 
 using namespace GitCondDB::v1;
-
-CondDB::CondDB( std::unique_ptr<details::DBImpl> impl ) : m_impl{std::move( impl )} { assert( m_impl ); }
-CondDB::~CondDB() {}
-
-void CondDB::disconnect() const { m_impl->disconnect(); }
-
-bool CondDB::connected() const { return m_impl->connected(); }
 
 namespace
 {
@@ -46,13 +41,6 @@ namespace
     return path;
   }
 
-  /// helper to extract the file name from a full path
-  std::string_view basename( std::string_view path )
-  {
-    // note: if '/' is not found, we get npos and npos + 1 is 0
-    return path.substr( path.rfind( '/' ) + 1 );
-  }
-
   inline std::string format_obj_id( const std::string& tag, const std::string& path )
   {
     return tag + ':' + normalize( path );
@@ -63,39 +51,22 @@ namespace
   }
   inline std::string format_obj_id( const CondDB::Key& key ) { return format_obj_id( key.tag, key.path ); }
 
-  // note: copied from DetCond/src/component/CondDBCommon.cpp
-  std::string generateXMLCatalog( const CondDB::dir_content& content )
+  std::string json_dir_converter( const CondDB::dir_content& content )
   {
-    std::ostringstream xml; // buffer for the XML
-
-    const auto name = basename( content.root );
-    // XML header, root element and catalog initial tag
-    xml << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
-        << "<!DOCTYPE DDDB SYSTEM \"git:/DTD/structure.dtd\">"
-        << "<DDDB><catalog name=\"" << name << "\">";
-
-    // sub-foldersets are considered as catalogs
-    for ( std::string_view f : content.dirs ) {
-      xml << "<catalogref href=\"" << name << '/' << f << "\"/>";
-    }
-
-    // sub-folders are considered as container of conditions
-    for ( std::string_view f : content.files ) {
-      // Ignore folders with .xml or .txt extension.
-      // We never used .xml for Online conditions and after the Hlt1/Hlt2 split
-      // we need to avoid automatic mapping for the .xml files.
-      const std::string_view suffix = ( f.length() >= 4 ) ? f.substr( f.length() - 4 ) : std::string_view{""};
-      if ( !( suffix == ".xml" || suffix == ".txt" ) ) {
-        xml << "<conditionref href=\"" << name << '/' << f << "\"/>";
-      }
-    }
-
-    // catalog and root element final tag
-    xml << "</catalog></DDDB>";
-
-    return xml.str();
+    using json = nlohmann::json;
+    return json{{"root", content.root}, {"dirs", content.dirs}, {"files", content.files}}.dump();
   }
 }
+
+CondDB::CondDB( std::unique_ptr<details::DBImpl> impl ) : m_impl{std::move( impl )}, m_dir_converter{json_dir_converter}
+{
+  assert( m_impl );
+}
+CondDB::~CondDB() {}
+
+void CondDB::disconnect() const { m_impl->disconnect(); }
+
+bool CondDB::connected() const { return m_impl->connected(); }
 
 std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bounds ) const
 {
@@ -123,7 +94,7 @@ std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bou
       content.dirs = std::move( dirs );
       std::sort( begin( content.files ), end( content.files ) );
       std::sort( begin( content.dirs ), end( content.dirs ) );
-      return {generateXMLCatalog( content ), {}};
+      return {m_dir_converter( content ), {}};
     }
   } else {
     return {std::get<0>( data ), bounds};
