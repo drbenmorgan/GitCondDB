@@ -30,8 +30,9 @@ namespace GitCondDB
     }
 
     struct CondDB;
+    struct Logger;
 
-    GITCONDDB_EXPORT CondDB connect( std::string_view repository );
+    GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger = nullptr );
 
     /// Interface for customizable logger
     struct Logger {
@@ -122,7 +123,7 @@ namespace GitCondDB
         return converter;
       }
 
-      void set_logger( std::shared_ptr<Logger> logger ) { swap( m_logger, logger ); }
+      void set_logger( std::shared_ptr<Logger> logger );
 
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
@@ -132,10 +133,9 @@ namespace GitCondDB
 
       std::unique_ptr<details::DBImpl> m_impl;
 
-      dir_converter_t         m_dir_converter;
-      std::shared_ptr<Logger> m_logger;
+      dir_converter_t m_dir_converter;
 
-      friend GITCONDDB_EXPORT CondDB connect( std::string_view repository );
+      friend GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger );
     };
   }
 }

@@ -28,6 +28,7 @@ namespace fs = std::experimental::filesystem;
 #include <fstream>
 #include <variant>
 
+#include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
 namespace GitCondDB
@@ -45,7 +46,16 @@ namespace GitCondDB
         return RET{tmp};
       }
 
-      struct DBImpl {
+      /// Helper no-op logger to simplify implementations
+      struct NullLogger : Logger {
+        void warning( std::string_view ) const override {}
+        void info( std::string_view ) const override {}
+        void debug( std::string_view ) const override {}
+      };
+
+      class DBImpl
+      {
+      public:
         using dir_content = CondDB::dir_content;
 
         virtual ~DBImpl() = default;
@@ -67,6 +77,25 @@ namespace GitCondDB
           }
           return object_id;
         }
+
+        DBImpl( std::shared_ptr<Logger> logger ) { set_logger( std::move( logger ) ); }
+
+        void set_logger( std::shared_ptr<Logger> logger )
+        {
+          if ( logger ) {
+            log.swap( logger );
+          } else {
+            log = std::make_shared<NullLogger>();
+          }
+        }
+
+        // logging helpers
+        void debug( std::string_view msg ) const { log->debug( msg ); }
+        void info( std::string_view msg ) const { log->info( msg ); }
+        void warning( std::string_view msg ) const { log->warning( msg ); }
+
+      private:
+        std::shared_ptr<Logger> log;
       };
 
       class GitImpl : public DBImpl
@@ -75,8 +104,10 @@ namespace GitCondDB
         using git_repository_ptr = GitCondDB::Helpers::git_repository_ptr;
 
       public:
-        GitImpl( std::string_view repository )
-            : m_repository_url( repository ), m_repository{[this]() -> git_repository_ptr::storage_t {
+        GitImpl( std::string_view repository, std::shared_ptr<Logger> logger = nullptr )
+            : DBImpl{std::move( logger )}
+            , m_repository_url( repository )
+            , m_repository{[this]() -> git_repository_ptr::storage_t {
               auto res = git_call<git_repository_ptr::storage_t>( "cannot open repository", m_repository_url,
                                                                   git_repository_open, m_repository_url.c_str() );
               if ( UNLIKELY( !res ) ) throw std::runtime_error{"invalid Git repository: '" + m_repository_url + "'"};
@@ -158,7 +189,8 @@ namespace GitCondDB
       class FilesystemImpl : public DBImpl
       {
       public:
-        FilesystemImpl( std::string_view root ) : m_root( root )
+        FilesystemImpl( std::string_view root, std::shared_ptr<Logger> logger = nullptr )
+            : DBImpl{std::move( logger )}, m_root( root )
         {
           if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
@@ -221,7 +253,7 @@ namespace GitCondDB
         using json = nlohmann::json;
 
       public:
-        JSONImpl( std::string_view data )
+        JSONImpl( std::string_view data, std::shared_ptr<Logger> logger = nullptr ) : DBImpl{std::move( logger )}
         {
           if ( data.find_first_of( '{' ) != data.npos ) {
             m_json = json::parse( data );
