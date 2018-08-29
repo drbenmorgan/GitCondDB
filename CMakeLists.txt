@@ -50,6 +50,9 @@ if(NOT JSON_INCLUDE_DIR)
 endif()
 include_directories("${JSON_INCLUDE_DIR}")
 
+find_package(fmt REQUIRED)
+
+
 include(GenerateExportHeader)
 
 
@@ -65,7 +68,7 @@ generate_export_header(GitCondDB)
 configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
 
 target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
-target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES})
+target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES} fmt::fmt)
 target_link_libraries(GitCondDB PUBLIC stdc++fs)
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
@@ -205,7 +208,7 @@ include(GoogleTest)
 foreach(subsystem CondDB  FS  Git  Helpers  JSON)
   add_executable(test_${subsystem} src/tests/${subsystem}_UnitTests.cpp)
   target_include_directories(test_${subsystem} PRIVATE include src)
-  target_link_libraries(test_${subsystem} GitCondDB ${git2_LIBRARIES} GTest::GTest GTest::Main)
+  target_link_libraries(test_${subsystem} GitCondDB ${git2_LIBRARIES} fmt::fmt GTest::GTest GTest::Main)
   if(TARGET googletest-distribution)
     add_dependencies(test_${subsystem} googletest-distribution)
   endif()
