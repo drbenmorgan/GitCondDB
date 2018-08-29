@@ -64,7 +64,7 @@ test-ubuntu-cov:
     - cmake --build ${BUILDDIR} --target clean-coverage-stats
     - cmake --build ${BUILDDIR} --target test
     - cmake --build ${BUILDDIR} --target generate-coverage-report
-    - if which gcovr >/dev/null ; then gcovr --gcov-exclude '.*GitCondDB_UnitTests.*|.*gtest.*' -r .. -s . ; fi
+    - if which gcovr >/dev/null ; then gcovr --gcov-exclude '.*_UnitTests.*|.*gtest.*|.*json\.hpp' -r .. -s . ; fi
   artifacts:
     paths:
       - ${BUILDDIR}/coverage_report
