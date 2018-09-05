@@ -59,7 +59,7 @@ include(GenerateExportHeader)
 # Build instructions
 
 set(HEAERS include/GitCondDB.h)
-set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/GitCondDB.cpp)
+set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/BasicLogger.h src/GitCondDB.cpp)
 
 add_library(GitCondDB ${HEADERS} ${SOURCES})
 generate_export_header(GitCondDB)
@@ -227,7 +227,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
       COMMENT "Cleaning coverage statistics")
     add_custom_target(generate-coverage-report
       COMMAND ${lcov_COMMAND} --quiet --capture --directory . --output-file coverage.info
-      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '${CMAKE_SOURCE_DIR}/src/tests/*_UnitTests.cpp'
+      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '*/BasicLogger.h' '${CMAKE_SOURCE_DIR}/src/tests/*'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")

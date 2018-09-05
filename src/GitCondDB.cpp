@@ -16,11 +16,12 @@
 
 #include "iov_helpers.h"
 
+#include "BasicLogger.h"
+
 #include <regex>
 #include <sstream>
 #include <tuple>
 
-#include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
 #include <cassert>
@@ -57,13 +58,6 @@ namespace
     using json = nlohmann::json;
     return json{{"root", content.root}, {"dirs", content.dirs}, {"files", content.files}}.dump();
   }
-
-  struct BasicLogger : Logger {
-    inline void print( std::string_view level, std::string_view msg ) const { fmt::print( "{}: {}\n", level, msg ); }
-    void warning( std::string_view msg ) const override { print( "warning", msg ); }
-    void info( std::string_view msg ) const override { print( "info", msg ); }
-    void debug( std::string_view msg ) const override { print( "debug", msg ); }
-  };
 }
 
 CondDB::CondDB( std::unique_ptr<details::DBImpl> impl ) : m_impl{std::move( impl )}, m_dir_converter{json_dir_converter}
