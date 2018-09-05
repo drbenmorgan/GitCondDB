@@ -36,6 +36,8 @@ namespace GitCondDB
 
     /// Interface for customizable logger
     struct Logger {
+      enum class Level { Debug, Verbose, Quiet, Nothing } level = Level::Quiet;
+
       virtual void warning( std::string_view msg ) const = 0;
       virtual void info( std::string_view msg ) const    = 0;
       virtual void debug( std::string_view msg ) const   = 0;
@@ -124,6 +126,7 @@ namespace GitCondDB
       }
 
       void set_logger( std::shared_ptr<Logger> logger );
+      Logger* logger() const;
 
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );

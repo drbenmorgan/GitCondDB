@@ -88,6 +88,7 @@ namespace GitCondDB
             log = std::make_shared<NullLogger>();
           }
         }
+        Logger* logger() const { return log.get(); }
 
         // logging helpers
         void debug( std::string_view msg ) const { log->debug( msg ); }

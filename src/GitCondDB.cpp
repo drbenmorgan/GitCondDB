@@ -74,6 +74,8 @@ CondDB::~CondDB() {}
 
 void CondDB::set_logger( std::shared_ptr<Logger> logger ) { m_impl->set_logger( std::move( logger ) ); }
 
+Logger* CondDB::logger() const { return m_impl->logger(); }
+
 void CondDB::disconnect() const { m_impl->disconnect(); }
 
 bool CondDB::connected() const { return m_impl->connected(); }
