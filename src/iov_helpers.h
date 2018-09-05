@@ -22,7 +22,8 @@
 namespace GitCondDB {
   namespace Helpers {
     std::tuple<std::string, CondDB::IOV> get_key_iov( const std::string& data, const CondDB::time_point_t t,
-                                                      const CondDB::IOV& boundaries = {} ) {
+                                                      const CondDB::IOV& boundaries  = {},
+                                                      const bool         reduce_iovs = true ) {
       std::tuple<std::string, CondDB::IOV> out;
       auto&                                key   = std::get<0>( out );
       auto&                                since = std::get<1>( out ).since;
@@ -40,7 +41,7 @@ namespace GitCondDB {
         while ( std::getline( stream, line ) ) {
           std::istringstream is{line};
           is >> current >> tmp_key;
-          if ( tmp_key != key ) {
+          if ( !reduce_iovs || tmp_key != key ) { // if we do not need to reduce IOVs, ignore identical keys
             if ( current > t ) {
               until = current; // what we read is the "until" for the previous key
               break;           // and we need to use the previous key

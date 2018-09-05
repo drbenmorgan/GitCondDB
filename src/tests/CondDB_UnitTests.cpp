@@ -359,6 +359,8 @@ TEST( CondDB, IOVReduction ) {
                                   "group": {"IOVs": "100 ../v1"}}}
                        )" );
 
+  EXPECT_TRUE( db.iov_reduction() );
+
   {
     auto [data, iov] = db.get( {"", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );
@@ -386,6 +388,53 @@ TEST( CondDB, IOVReduction ) {
   {
     auto [data, iov] = db.get( {"", "Cond", 260} );
     EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+    EXPECT_EQ( data, "data 2" );
+  }
+
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 60} );
+    EXPECT_EQ( iov.since, 50 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+
+  // disable reduction
+  db.set_iov_reduction( false );
+  EXPECT_FALSE( db.iov_reduction() );
+  {
+    auto [data, iov] = db.get( {"", "Cond", 0} );
+    EXPECT_EQ( iov.since, 0 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 0" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 150 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 160} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 210} );
+    EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, 250 );
+    EXPECT_EQ( data, "data 2" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 260} );
+    EXPECT_EQ( iov.since, 250 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 2" );
   }

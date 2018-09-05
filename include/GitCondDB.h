@@ -120,6 +120,9 @@ namespace GitCondDB {
       void    set_logger( std::shared_ptr<Logger> logger );
       Logger* logger() const;
 
+      bool iov_reduction() const { return m_reduce_iovs; }
+      void set_iov_reduction( bool value ) { m_reduce_iovs = value; }
+
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
 
@@ -129,6 +132,9 @@ namespace GitCondDB {
       std::unique_ptr<details::DBImpl> m_impl;
 
       dir_converter_t m_dir_converter;
+
+      /// If true, hide IOV boundaries if the payload does not change.
+      bool m_reduce_iovs = true;
 
       friend GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger );
     };
