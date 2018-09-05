@@ -109,6 +109,7 @@ namespace GitCondDB
             : DBImpl{std::move( logger )}
             , m_repository_url( repository )
             , m_repository{[this]() -> git_repository_ptr::storage_t {
+              info( fmt::format( "opening Git repository '{}'", m_repository_url ) );
               auto res = git_call<git_repository_ptr::storage_t>( "cannot open repository", m_repository_url,
                                                                   git_repository_open, m_repository_url.c_str() );
               if ( UNLIKELY( !res ) ) throw std::runtime_error{"invalid Git repository: '" + m_repository_url + "'"};
@@ -128,7 +129,11 @@ namespace GitCondDB
           git_libgit2_shutdown();
         }
 
-        void disconnect() const override { m_repository.reset(); }
+        void disconnect() const override
+        {
+          debug( "disconnect from Git repository" );
+          m_repository.reset();
+        }
 
         bool connected() const override { return m_repository.is_set(); }
 
@@ -143,9 +148,12 @@ namespace GitCondDB
 
         std::variant<std::string, dir_content> get( const char* object_id ) const override
         {
+          debug( std::string{"get Git object "} + object_id );
           std::variant<std::string, dir_content> out;
           auto obj = get_object( object_id );
           if ( git_object_type( obj.get() ) == GIT_OBJ_TREE ) {
+            debug( "found tree object" );
+
             dir_content entries;
             entries.root = strip_tag( object_id );
 
@@ -161,6 +169,8 @@ namespace GitCondDB
             }
             out = std::move( entries );
           } else {
+            debug( "found blob object" );
+
             auto blob = reinterpret_cast<const git_blob*>( obj.get() );
             out       = std::string{reinterpret_cast<const char*>( git_blob_rawcontent( blob ) ),
                               static_cast<std::size_t>( git_blob_rawsize( blob ) )};
@@ -193,6 +203,7 @@ namespace GitCondDB
         FilesystemImpl( std::string_view root, std::shared_ptr<Logger> logger = nullptr )
             : DBImpl{std::move( logger )}, m_root( root )
         {
+          info( fmt::format( "using files from '{}'", m_root.string() ) );
           if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
 
@@ -212,7 +223,11 @@ namespace GitCondDB
           std::variant<std::string, dir_content> out;
           const auto path = to_path( object_id );
 
+          debug( std::string{"accessing path "} + path.string() );
+
           if ( is_directory( path ) ) {
+            debug( "found directory" );
+
             dir_content entries;
             entries.root = strip_tag( object_id );
 
@@ -222,6 +237,7 @@ namespace GitCondDB
 
             out = std::move( entries );
           } else if ( is_regular_file( path ) ) {
+            debug( "found regular file" );
 
             std::ifstream stream{path.string()};
             stream.seekg( 0, stream.end );
@@ -257,8 +273,10 @@ namespace GitCondDB
         JSONImpl( std::string_view data, std::shared_ptr<Logger> logger = nullptr ) : DBImpl{std::move( logger )}
         {
           if ( data.find_first_of( '{' ) != data.npos ) {
+            info( "using JSON data from memory" );
             m_json = json::parse( data );
           } else if ( is_regular_file( fs::path( data ) ) ) {
+            info( fmt::format( "loading JSON data from '{}'", data ) );
             std::ifstream stream{std::string{data}};
             stream >> m_json;
           } else {
@@ -281,11 +299,16 @@ namespace GitCondDB
         {
           std::variant<std::string, dir_content> out;
 
-          auto obj = m_json.value( to_path( object_id ), json{} );
+          const auto path = to_path( object_id );
+          debug( fmt::format( "accessing entry '{}'", path.to_string() ) );
+
+          auto obj = m_json.value( path, json{} );
 
           if ( UNLIKELY( obj.is_null() ) ) {
             throw std::runtime_error{std::string{"cannot resolve object "} + object_id};
           } else if ( obj.is_object() ) {
+            debug( "found object" );
+
             dir_content entries;
 
             entries.root = strip_tag( object_id );
@@ -297,6 +320,7 @@ namespace GitCondDB
 
             out = std::move( entries );
           } else if ( LIKELY( obj.is_string() ) ) {
+            debug( "found string" );
             out = std::string{obj};
           } else {
             throw std::runtime_error{std::string{"invalid type at "} + object_id};

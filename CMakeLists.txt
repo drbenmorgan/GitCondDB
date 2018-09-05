@@ -206,7 +206,7 @@ add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
 include(GoogleTest)
 
 foreach(subsystem CondDB  FS  Git  Helpers  JSON)
-  add_executable(test_${subsystem} src/tests/${subsystem}_UnitTests.cpp)
+  add_executable(test_${subsystem} src/tests/test_common.h src/tests/${subsystem}_UnitTests.cpp)
   target_include_directories(test_${subsystem} PRIVATE include src)
   target_link_libraries(test_${subsystem} GitCondDB ${git2_LIBRARIES} fmt::fmt GTest::GTest GTest::Main)
   if(TARGET googletest-distribution)
