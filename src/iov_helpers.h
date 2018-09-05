@@ -35,16 +35,19 @@ namespace GitCondDB {
         std::string          line;
 
         std::istringstream stream{data};
+        std::string        tmp_key;
 
         while ( std::getline( stream, line ) ) {
           std::istringstream is{line};
-          is >> current;
-          if ( current > t ) {
-            until = current; // what we read is the "until" for the previous key
-            break;           // and we need to use the previous key
+          is >> current >> tmp_key;
+          if ( tmp_key != key ) {
+            if ( current > t ) {
+              until = current; // what we read is the "until" for the previous key
+              break;           // and we need to use the previous key
+            }
+            key   = std::move( tmp_key );
+            since = current; // the time we read is the "since" for the read key
           }
-          is >> key;
-          since = current; // the time we read is the "since" for the read key
         }
         std::get<1>( out ).cut( boundaries );
       }
