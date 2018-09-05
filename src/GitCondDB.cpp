@@ -16,6 +16,8 @@
 
 #include "iov_helpers.h"
 
+#include "BasicLogger.h"
+
 #include <regex>
 #include <sstream>
 #include <tuple>
@@ -64,6 +66,10 @@ CondDB::CondDB( std::unique_ptr<details::DBImpl> impl ) : m_impl{std::move( impl
 }
 CondDB::~CondDB() {}
 
+void CondDB::set_logger( std::shared_ptr<Logger> logger ) { m_impl->set_logger( std::move( logger ) ); }
+
+Logger* CondDB::logger() const { return m_impl->logger(); }
+
 void CondDB::disconnect() const { m_impl->disconnect(); }
 
 bool CondDB::connected() const { return m_impl->connected(); }
@@ -106,16 +112,18 @@ std::chrono::system_clock::time_point CondDB::commit_time( const std::string& co
   return m_impl->commit_time( commit_id.c_str() );
 }
 
-CondDB GitCondDB::v1::connect( std::string_view repository )
+CondDB GitCondDB::v1::connect( std::string_view repository, std::shared_ptr<Logger> logger )
 {
+  if ( !logger ) logger = std::make_shared<BasicLogger>();
+
   if ( repository.substr( 0, 5 ) == "file:" ) {
-    return {std::make_unique<details::FilesystemImpl>( repository.substr( 5 ) )};
+    return {std::make_unique<details::FilesystemImpl>( repository.substr( 5 ), std::move( logger ) )};
   } else if ( repository.substr( 0, 5 ) == "json:" ) {
-    return {std::make_unique<details::JSONImpl>( repository.substr( 5 ) )};
+    return {std::make_unique<details::JSONImpl>( repository.substr( 5 ), std::move( logger ) )};
   } else if ( repository.substr( 0, 4 ) == "git:" ) {
-    return {std::make_unique<details::GitImpl>( repository.substr( 4 ) )};
+    return {std::make_unique<details::GitImpl>( repository.substr( 4 ), std::move( logger ) )};
   } else {
-    return {std::make_unique<details::GitImpl>( repository )};
+    return {std::make_unique<details::GitImpl>( repository, std::move( logger ) )};
   }
 }
 

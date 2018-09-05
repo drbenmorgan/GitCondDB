@@ -14,6 +14,8 @@
 #include "DBImpl.h"
 #include "iov_helpers.h"
 
+#include "test_common.h"
+
 #include "gtest/gtest.h"
 
 using namespace GitCondDB::v1;
@@ -330,6 +332,33 @@ TEST( CondDB, IOVAccess_JSON )
     auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( data, "" );
+  }
+}
+
+TEST( CondDB, Logging )
+{
+  auto logger = std::make_shared<CapturingLogger>();
+
+  CondDB db = connect( R"(json:
+                       {"Cond": {"IOVs": "0 v0\n100 group\n200 v2\n",
+                                 "v0": "data 0",
+                                 "v1": "data 1",
+                                 "v2": "data 2",
+                                 "group": {"IOVs": "50 ../v1"}}}
+                       )" );
+
+  EXPECT_NE( logger.get(), db.logger() );
+  db.set_logger( logger );
+  EXPECT_EQ( logger.get(), db.logger() );
+
+  db.set_logger( nullptr );
+  EXPECT_NE( nullptr, db.logger() );
+
+  {
+    details::NullLogger nl;
+    nl.debug( "nothing" );
+    nl.info( "nothing" );
+    nl.warning( "nothing" );
   }
 }
 

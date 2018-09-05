@@ -30,8 +30,20 @@ namespace GitCondDB
     }
 
     struct CondDB;
+    struct Logger;
 
-    GITCONDDB_EXPORT CondDB connect( std::string_view repository );
+    GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger = nullptr );
+
+    /// Interface for customizable logger
+    struct Logger {
+      enum class Level { Debug, Verbose, Quiet, Nothing } level = Level::Quiet;
+
+      virtual void warning( std::string_view msg ) const = 0;
+      virtual void info( std::string_view msg ) const    = 0;
+      virtual void debug( std::string_view msg ) const   = 0;
+
+      virtual ~Logger() = default;
+    };
 
     struct GITCONDDB_EXPORT CondDB {
       using time_point_t = std::uint_fast64_t;
@@ -113,6 +125,9 @@ namespace GitCondDB
         return converter;
       }
 
+      void set_logger( std::shared_ptr<Logger> logger );
+      Logger* logger() const;
+
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
 
@@ -123,7 +138,7 @@ namespace GitCondDB
 
       dir_converter_t m_dir_converter;
 
-      friend GITCONDDB_EXPORT CondDB connect( std::string_view repository );
+      friend GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger );
     };
   }
 }
