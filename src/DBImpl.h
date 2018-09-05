@@ -298,6 +298,8 @@ namespace GitCondDB
             out = std::move( entries );
           } else if ( LIKELY( obj.is_string() ) ) {
             out = std::string{obj};
+          } else {
+            throw std::runtime_error{std::string{"invalid type at "} + object_id};
           }
           return out;
         }

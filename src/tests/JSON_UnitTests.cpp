@@ -52,7 +52,8 @@ TEST( JSONImpl, AccessMemory )
         "IOVs": "0 a\n100 b\n",
         "a": "data a",
         "b": "data b"
-      }
+      },
+      "BadType": 123
     })"};
 
   EXPECT_EQ( std::get<0>( db.get( "HEAD:TheDir/TheFile.txt" ) ), "JSON data\n" );
@@ -70,7 +71,7 @@ TEST( JSONImpl, AccessMemory )
     std::vector<std::string> expected{"Cond", "TheDir"};
     sort( begin( cont.dirs ), end( cont.dirs ) );
     EXPECT_EQ( cont.dirs, expected );
-    EXPECT_EQ( cont.files, std::vector<std::string>{} );
+    EXPECT_EQ( cont.files, std::vector<std::string>{{"BadType"}} );
     EXPECT_EQ( cont.root, "" );
   }
 
@@ -85,6 +86,13 @@ TEST( JSONImpl, AccessMemory )
     FAIL() << "exception expected for invalid path";
   } catch ( std::runtime_error& err ) {
     EXPECT_EQ( std::string_view{err.what()}, "cannot resolve object HEAD:Nothing" );
+  }
+
+  try {
+    db.get( "HEAD:BadType" );
+    FAIL() << "exception expected for invalid path";
+  } catch ( std::runtime_error& err ) {
+    EXPECT_EQ( std::string_view{err.what()}, "invalid type at HEAD:BadType" );
   }
 
   EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
