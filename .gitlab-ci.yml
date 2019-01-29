@@ -3,6 +3,8 @@ stages:
   - build
   - test
 
+variables:
+  BUILDDIR: build
 
 ubuntu-image:
   stage: images
@@ -19,8 +21,6 @@ ubuntu-image:
 build-ubuntu-rel:
   stage: build
   image: ${CI_REGISTRY_IMAGE}:ubuntu
-  variables:
-    BUILDDIR: build-ubuntu-rel
   script:
     - mkdir -p ${BUILDDIR}
     - cd ${BUILDDIR}
@@ -33,8 +33,7 @@ build-ubuntu-rel:
 test-ubuntu-rel:
   stage: test
   image: ${CI_REGISTRY_IMAGE}:ubuntu
-  variables:
-    BUILDDIR: build-ubuntu-rel
+  dependencies: [build-ubuntu-rel]
   script:
     - find ${BUILDDIR} -type f -exec touch -d $(date +@%s) \{} \;
     - cmake --build ${BUILDDIR} --target test
@@ -43,8 +42,6 @@ test-ubuntu-rel:
 build-ubuntu-cov:
   stage: build
   image: ${CI_REGISTRY_IMAGE}:ubuntu
-  variables:
-    BUILDDIR: build-ubuntu-cov
   script:
     - mkdir -p ${BUILDDIR}
     - cd ${BUILDDIR}
@@ -57,8 +54,7 @@ build-ubuntu-cov:
 test-ubuntu-cov:
   stage: test
   image: ${CI_REGISTRY_IMAGE}:ubuntu
-  variables:
-    BUILDDIR: build-ubuntu-cov
+  dependencies: [build-ubuntu-cov]
   script:
     - find ${BUILDDIR} -type f -exec touch -d $(date +@%s) \{} \;
     - cmake --build ${BUILDDIR} --target clean-coverage-stats
@@ -73,6 +69,7 @@ test-ubuntu-cov:
 code-format:
   stage: test
   image: ${CI_REGISTRY_IMAGE}:ubuntu
+  dependencies: []
   script:
     - git fetch origin master
     - git diff --name-only --no-renames --diff-filter MA FETCH_HEAD...HEAD | grep -E '\.(h|cpp)$' |
