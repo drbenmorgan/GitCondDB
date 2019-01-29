@@ -28,11 +28,9 @@
 
 using namespace GitCondDB::v1;
 
-namespace
-{
+namespace {
   /// helper to normalize relative paths
-  std::string normalize( std::string path )
-  {
+  std::string normalize( std::string path ) {
     // regex for entries to be removed, i.e. "/parent/../" and "/./"
     static const std::regex ignored_re{"(/[^/]+/\\.\\./)|(/\\./)"};
     std::string             old_path;
@@ -43,25 +41,22 @@ namespace
     return path;
   }
 
-  inline std::string format_obj_id( const std::string& tag, const std::string& path )
-  {
+  inline std::string format_obj_id( const std::string& tag, const std::string& path ) {
     return tag + ':' + normalize( path );
   }
-  inline std::string format_obj_id( const std::string_view& tag, const std::string_view& path )
-  {
+  inline std::string format_obj_id( const std::string_view& tag, const std::string_view& path ) {
     return format_obj_id( std::string{tag}, std::string{path} );
   }
   inline std::string format_obj_id( const CondDB::Key& key ) { return format_obj_id( key.tag, key.path ); }
 
-  std::string json_dir_converter( const CondDB::dir_content& content )
-  {
+  std::string json_dir_converter( const CondDB::dir_content& content ) {
     using json = nlohmann::json;
     return json{{"root", content.root}, {"dirs", content.dirs}, {"files", content.files}}.dump();
   }
-}
+} // namespace
 
-CondDB::CondDB( std::unique_ptr<details::DBImpl> impl ) : m_impl{std::move( impl )}, m_dir_converter{json_dir_converter}
-{
+CondDB::CondDB( std::unique_ptr<details::DBImpl> impl )
+    : m_impl{std::move( impl )}, m_dir_converter{json_dir_converter} {
   assert( m_impl );
 }
 CondDB::~CondDB() {}
@@ -74,8 +69,7 @@ void CondDB::disconnect() const { m_impl->disconnect(); }
 
 bool CondDB::connected() const { return m_impl->connected(); }
 
-std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bounds ) const
-{
+std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bounds ) const {
   const std::string object_id = format_obj_id( key );
   auto              data      = m_impl->get( object_id.c_str() );
   if ( data.index() == 1 ) { // we got a directory
@@ -107,13 +101,11 @@ std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bou
   }
 }
 
-std::chrono::system_clock::time_point CondDB::commit_time( const std::string& commit_id ) const
-{
+std::chrono::system_clock::time_point CondDB::commit_time( const std::string& commit_id ) const {
   return m_impl->commit_time( commit_id.c_str() );
 }
 
-CondDB GitCondDB::v1::connect( std::string_view repository, std::shared_ptr<Logger> logger )
-{
+CondDB GitCondDB::v1::connect( std::string_view repository, std::shared_ptr<Logger> logger ) {
   if ( !logger ) logger = std::make_shared<BasicLogger>();
 
   if ( repository.substr( 0, 5 ) == "file:" ) {
@@ -127,9 +119,8 @@ CondDB GitCondDB::v1::connect( std::string_view repository, std::shared_ptr<Logg
   }
 }
 
-void CondDB::iov_boundaries_accumulate( const std::string& object_id, const CondDB::IOV&  limits,
-                                        std::vector<std::pair<CondDB::IOV, std::string>>& acc ) const
-{
+void CondDB::iov_boundaries_accumulate( const std::string& object_id, const CondDB::IOV& limits,
+                                        std::vector<std::pair<CondDB::IOV, std::string>>& acc ) const {
   // get all iovs in the current obj_id
   auto iovs_file = object_id + "/IOVs";
   if ( !m_impl->exists( iovs_file.c_str() ) ) {
@@ -144,8 +135,7 @@ void CondDB::iov_boundaries_accumulate( const std::string& object_id, const Cond
 }
 
 std::vector<CondDB::time_point_t> CondDB::iov_boundaries( std::string_view tag, std::string_view path,
-                                                          const IOV& boundaries ) const
-{
+                                                          const IOV& boundaries ) const {
   std::vector<CondDB::time_point_t> out;
 
   const auto object_id = format_obj_id( tag, path );

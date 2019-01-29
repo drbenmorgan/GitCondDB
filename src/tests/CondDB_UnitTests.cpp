@@ -20,18 +20,15 @@
 
 using namespace GitCondDB::v1;
 
-namespace
-{
+namespace {
   /// helper to extract the file name from a full path
-  std::string_view basename( std::string_view path )
-  {
+  std::string_view basename( std::string_view path ) {
     // note: if '/' is not found, we get npos and npos + 1 is 0
     return path.substr( path.rfind( '/' ) + 1 );
   }
 
   // note: copied from LHCb DetCond/src/component/CondDBCommon.cpp
-  std::string generateXMLCatalog( const CondDB::dir_content& content )
-  {
+  std::string generateXMLCatalog( const CondDB::dir_content& content ) {
     std::ostringstream xml; // buffer for the XML
 
     const auto name = basename( content.root );
@@ -41,9 +38,7 @@ namespace
         << "<DDDB><catalog name=\"" << name << "\">";
 
     // sub-foldersets are considered as catalogs
-    for ( std::string_view f : content.dirs ) {
-      xml << "<catalogref href=\"" << name << '/' << f << "\"/>";
-    }
+    for ( std::string_view f : content.dirs ) { xml << "<catalogref href=\"" << name << '/' << f << "\"/>"; }
 
     // sub-folders are considered as container of conditions
     for ( std::string_view f : content.files ) {
@@ -51,9 +46,7 @@ namespace
       // We never used .xml for Online conditions and after the Hlt1/Hlt2 split
       // we need to avoid automatic mapping for the .xml files.
       const std::string_view suffix = ( f.length() >= 4 ) ? f.substr( f.length() - 4 ) : std::string_view{""};
-      if ( !( suffix == ".xml" || suffix == ".txt" ) ) {
-        xml << "<conditionref href=\"" << name << '/' << f << "\"/>";
-      }
+      if ( !( suffix == ".xml" || suffix == ".txt" ) ) { xml << "<conditionref href=\"" << name << '/' << f << "\"/>"; }
     }
 
     // catalog and root element final tag
@@ -61,10 +54,9 @@ namespace
 
     return xml.str();
   }
-}
+} // namespace
 
-TEST( CondDB, Connection )
-{
+TEST( CondDB, Connection ) {
   CondDB db = connect( "test_data/repo.git" );
 
   EXPECT_TRUE( db.connected() );
@@ -84,8 +76,7 @@ TEST( CondDB, Connection )
   EXPECT_FALSE( db.connected() );
 }
 
-TEST( CondDB, Access )
-{
+TEST( CondDB, Access ) {
   {
     CondDB db = connect( "test_data/repo.git" );
     EXPECT_EQ( std::get<0>( db.get( {"HEAD", "TheDir/TheFile.txt", 0} ) ), "some data\n" );
@@ -115,8 +106,7 @@ TEST( CondDB, Access )
   }
 }
 
-TEST( CondDB, Directory )
-{
+TEST( CondDB, Directory ) {
   CondDB db = connect( "test_data/lhcb/repo" );
 
   const std::string default_dir_output =
@@ -131,7 +121,7 @@ TEST( CondDB, Directory )
                                       "</catalog></DDDB>";
 
   {
-    auto[data, iov] = db.get( {"HEAD", "Direct", 0} );
+    auto [data, iov] = db.get( {"HEAD", "Direct", 0} );
     EXPECT_EQ( iov.since, GitCondDB::CondDB::IOV::min() );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, default_dir_output );
@@ -139,7 +129,7 @@ TEST( CondDB, Directory )
 
   auto old = db.set_dir_converter( generateXMLCatalog );
   {
-    auto[data, iov] = db.get( {"HEAD", "Direct", 0} );
+    auto [data, iov] = db.get( {"HEAD", "Direct", 0} );
     EXPECT_EQ( iov.since, GitCondDB::CondDB::IOV::min() );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, lhcb_dir_output );
@@ -147,49 +137,48 @@ TEST( CondDB, Directory )
 
   db.set_dir_converter( old );
   {
-    auto[data, iov] = db.get( {"HEAD", "Direct", 0} );
+    auto [data, iov] = db.get( {"HEAD", "Direct", 0} );
     EXPECT_EQ( iov.since, GitCondDB::CondDB::IOV::min() );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, default_dir_output );
   }
 }
 
-TEST( CondDB, IOVAccess )
-{
+TEST( CondDB, IOVAccess ) {
   CondDB db = connect( "test_data/repo" );
 
   {
-    auto[data, iov] = db.get( {"v0", "Cond", 0} );
+    auto [data, iov] = db.get( {"v0", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );
     EXPECT_EQ( iov.until, 100 );
     EXPECT_EQ( data, "data 0" );
   }
   {
-    auto[data, iov] = db.get( {"v0", "Cond", 110} );
+    auto [data, iov] = db.get( {"v0", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 1" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 0} );
+    auto [data, iov] = db.get( {"v1", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );
     EXPECT_EQ( iov.until, 100 );
     EXPECT_EQ( data, "data 0" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 110} );
+    auto [data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
     EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    auto [data, iov] = db.get( {"v1", "Cond", 150} );
     EXPECT_EQ( iov.since, 150 );
     EXPECT_EQ( iov.until, 200 );
     EXPECT_EQ( data, "data 2" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 3" );
@@ -197,14 +186,13 @@ TEST( CondDB, IOVAccess )
 
   // for attempt of invalid retrieval
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( data, "" );
   }
 }
 
-TEST( CondDB, GetIOVs )
-{
+TEST( CondDB, GetIOVs ) {
   {
     CondDB db = connect( "test_data/repo" );
 
@@ -248,43 +236,41 @@ TEST( CondDB, GetIOVs )
   }
 }
 
-TEST( CondDB, Directory_FS )
-{
+TEST( CondDB, Directory_FS ) {
   CondDB db = connect( "file:test_data/lhcb/repo" );
 
   const std::string dir_output =
       R"({"dirs":["Nested"],"files":["Cond1","Cond2","Ignored.txt","Ignored.xml"],"root":"Direct"})";
 
-  auto[data, iov] = db.get( {"dummy", "Direct", 0} );
+  auto [data, iov] = db.get( {"dummy", "Direct", 0} );
   EXPECT_EQ( iov.since, GitCondDB::CondDB::IOV::min() );
   EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
   EXPECT_EQ( data, dir_output );
 }
 
-TEST( CondDB, IOVAccess_FS )
-{
+TEST( CondDB, IOVAccess_FS ) {
   CondDB db = connect( "file:test_data/repo" );
 
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 0} );
+    auto [data, iov] = db.get( {"v1", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );
     EXPECT_EQ( iov.until, 100 );
     EXPECT_EQ( data, "data 0" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 110} );
+    auto [data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
     EXPECT_EQ( iov.until, 150 );
     EXPECT_EQ( data, "data 1" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 150} );
+    auto [data, iov] = db.get( {"v1", "Cond", 150} );
     EXPECT_EQ( iov.since, 150 );
     EXPECT_EQ( iov.until, 200 );
     EXPECT_EQ( data, "data 2" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 3" );
@@ -292,14 +278,13 @@ TEST( CondDB, IOVAccess_FS )
 
   // for attempt of invalid retrieval
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( data, "" );
   }
 }
 
-TEST( CondDB, IOVAccess_JSON )
-{
+TEST( CondDB, IOVAccess_JSON ) {
   CondDB db = connect( R"(json:
                        {"Cond": {"IOVs": "0 v0\n100 group\n200 v2\n",
                                  "v0": "data 0",
@@ -309,19 +294,19 @@ TEST( CondDB, IOVAccess_JSON )
                        )" );
 
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 0} );
+    auto [data, iov] = db.get( {"v1", "Cond", 0} );
     EXPECT_EQ( iov.since, 0 );
     EXPECT_EQ( iov.until, 100 );
     EXPECT_EQ( data, "data 0" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 110} );
+    auto [data, iov] = db.get( {"v1", "Cond", 110} );
     EXPECT_EQ( iov.since, 100 );
     EXPECT_EQ( iov.until, 200 );
     EXPECT_EQ( data, "data 1" );
   }
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210} );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
     EXPECT_EQ( data, "data 2" );
@@ -329,14 +314,13 @@ TEST( CondDB, IOVAccess_JSON )
 
   // for attempt of invalid retrieval
   {
-    auto[data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
+    auto [data, iov] = db.get( {"v1", "Cond", 210}, {0, 200} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( data, "" );
   }
 }
 
-TEST( CondDB, Logging )
-{
+TEST( CondDB, Logging ) {
   auto logger = std::make_shared<CapturingLogger>();
 
   CondDB db = connect( R"(json:
@@ -362,8 +346,7 @@ TEST( CondDB, Logging )
   }
 }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }

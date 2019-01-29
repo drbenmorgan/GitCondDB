@@ -18,10 +18,8 @@
 #include <mutex>
 #include <string>
 
-namespace GitCondDB
-{
-  namespace Helpers
-  {
+namespace GitCondDB {
+  namespace Helpers {
 
     struct git_object_deleter {
       void operator()( git_object* ptr ) { git_object_free( ptr ); }
@@ -33,8 +31,7 @@ namespace GitCondDB
     using git_object_ptr = std::unique_ptr<git_object, git_object_deleter>;
 
     /// Helper class to allow on-demand connection to the git repository.
-    class git_repository_ptr
-    {
+    class git_repository_ptr {
     public:
       using storage_t = std::unique_ptr<git_repository, git_repository_deleter>;
       using factory_t = std::function<storage_t()>;
@@ -43,8 +40,7 @@ namespace GitCondDB
 
       git_repository_ptr( factory_t factory ) : m_factory( std::move( factory ) ) {}
 
-      pointer get() const
-      {
+      pointer get() const {
         {
           std::lock_guard<std::mutex> guard( m_ptr_mutex );
           if ( !m_ptr ) {
@@ -61,8 +57,7 @@ namespace GitCondDB
 
       explicit operator bool() const { return get(); }
 
-      void reset()
-      {
+      void reset() {
         std::lock_guard<std::mutex> guard( m_ptr_mutex );
         m_ptr.reset();
       }
@@ -74,6 +69,6 @@ namespace GitCondDB
       mutable storage_t  m_ptr;
       mutable std::mutex m_ptr_mutex;
     };
-  }
-}
+  } // namespace Helpers
+} // namespace GitCondDB
 #endif // GIT_HELPERS_H

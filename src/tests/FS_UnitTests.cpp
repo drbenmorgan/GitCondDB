@@ -20,8 +20,7 @@
 
 using namespace GitCondDB::v1;
 
-TEST( FSImpl, Connection )
-{
+TEST( FSImpl, Connection ) {
   auto logger = std::make_shared<CapturingLogger>();
 
   details::FilesystemImpl db{"test_data/repo", logger};
@@ -36,8 +35,7 @@ TEST( FSImpl, Connection )
   EXPECT_TRUE( db.connected() );
 }
 
-TEST( FSImpl, Access )
-{
+TEST( FSImpl, Access ) {
   auto logger = std::make_shared<CapturingLogger>();
 
   details::FilesystemImpl db{"test_data/repo", logger};
@@ -97,8 +95,7 @@ TEST( FSImpl, Access )
   EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
 }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }

@@ -19,17 +19,14 @@
 #include <string>
 #include <tuple>
 
-namespace GitCondDB
-{
-  namespace Helpers
-  {
+namespace GitCondDB {
+  namespace Helpers {
     std::tuple<std::string, CondDB::IOV> get_key_iov( const std::string& data, const CondDB::time_point_t t,
-                                                      const CondDB::IOV& boundaries = {} )
-    {
+                                                      const CondDB::IOV& boundaries = {} ) {
       std::tuple<std::string, CondDB::IOV> out;
-      auto& key   = std::get<0>( out );
-      auto& since = std::get<1>( out ).since;
-      auto& until = std::get<1>( out ).until;
+      auto&                                key   = std::get<0>( out );
+      auto&                                since = std::get<1>( out ).since;
+      auto&                                until = std::get<1>( out ).until;
 
       if ( UNLIKELY( t < boundaries.since || t >= boundaries.until ) ) {
         since = until = 0;
@@ -54,10 +51,9 @@ namespace GitCondDB
       return out;
     }
 
-    std::vector<std::pair<CondDB::IOV, std::string>> parse_IOVs_keys( const std::string& data )
-    {
+    std::vector<std::pair<CondDB::IOV, std::string>> parse_IOVs_keys( const std::string& data ) {
       std::vector<std::pair<CondDB::IOV, std::string>> out;
-      std::string line;
+      std::string                                      line;
 
       CondDB::time_point_t bound;
       std::string          key;
@@ -67,15 +63,13 @@ namespace GitCondDB
       while ( std::getline( stream, line ) ) {
         std::istringstream is{line};
         is >> bound >> key;
-        if ( LIKELY( !out.empty() ) ) {
-          out.back().first.until = bound;
-        }
+        if ( LIKELY( !out.empty() ) ) { out.back().first.until = bound; }
         out.emplace_back( CondDB::IOV{bound, CondDB::IOV::max()}, std::move( key ) );
       }
 
       return out;
     }
-  }
-}
+  } // namespace Helpers
+} // namespace GitCondDB
 
 #endif // IOV_HELPERS_H

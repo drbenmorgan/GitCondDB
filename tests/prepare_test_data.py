@@ -69,15 +69,13 @@ def lhcb_conddb_case(path):
     copytree(src_data, path)
 
     call(['git', 'init', path])
-    call(
-        ['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
-        cwd=path)
-    call(
-        [
-            'git', 'config', '-f', '.git/config', 'user.email',
-            'test.user@no.where'
-        ],
-        cwd=path)
+    call(['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
+         cwd=path)
+    call([
+        'git', 'config', '-f', '.git/config', 'user.email',
+        'test.user@no.where'
+    ],
+         cwd=path)
     call(['git', 'add', '.'], cwd=path)
     env = dict(os.environ)
     env['GIT_COMMITTER_DATE'] = env['GIT_AUTHOR_DATE'] = '1483225200'
@@ -146,15 +144,13 @@ def create_mini_repo(path):
     env = dict(os.environ)
 
     call(['git', 'init', path])
-    call(
-        ['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
-        cwd=path)
-    call(
-        [
-            'git', 'config', '-f', '.git/config', 'user.email',
-            'test.user@no.where'
-        ],
-        cwd=path)
+    call(['git', 'config', '-f', '.git/config', 'user.name', 'Test User'],
+         cwd=path)
+    call([
+        'git', 'config', '-f', '.git/config', 'user.email',
+        'test.user@no.where'
+    ],
+         cwd=path)
 
     makedirs(join(path, 'TheDir'))
     with open(join(path, 'TheDir', 'TheFile.txt'), 'w') as f:
@@ -208,9 +204,9 @@ def write_json_files(path):
 
 
 def main():
-    level = (logging.DEBUG
-             if ('--debug' in sys.argv or os.environ.get('VERBOSE')) else
-             logging.WARNING)
+    level = (logging.DEBUG if
+             ('--debug' in sys.argv
+              or os.environ.get('VERBOSE')) else logging.WARNING)
     logging.basicConfig(level=level)
 
     if exists('test_data'):
