@@ -76,7 +76,7 @@ std::tuple<std::string, CondDB::IOV> CondDB::get( const Key& key, const IOV& bou
     auto& content = std::get<1>( data );
     if ( find( begin( content.files ), end( content.files ), "IOVs" ) != end( content.files ) ) {
       auto info = GitCondDB::Helpers::get_key_iov( std::get<0>( m_impl->get( ( object_id + "/IOVs" ).c_str() ) ),
-                                                   key.time_point, bounds );
+                                                   key.time_point, bounds, m_reduce_iovs );
       if ( LIKELY( std::get<1>( info ).valid() ) ) {
         Key new_key = key;
         new_key.path += '/' + std::get<0>( info );

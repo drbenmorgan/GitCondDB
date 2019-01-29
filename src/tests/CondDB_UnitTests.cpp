@@ -346,6 +346,113 @@ TEST( CondDB, Logging ) {
   }
 }
 
+TEST( CondDB, IOVReduction ) {
+  CondDB db = connect( R"(json:
+                       {"Cond": {"IOVs": "0 v0\n100 v1\n150 v1\n200 v2\n250 v2\n",
+                                 "v0": "data 0",
+                                 "v1": "data 1",
+                                 "v2": "data 2"},
+                        "Cond2": {"IOVs": "0 v0\n50 v1\n100 group\n200 v2\n",
+                                  "v0": "data 0",
+                                  "v1": "data 1",
+                                  "v2": "data 2",
+                                  "group": {"IOVs": "100 ../v1"}}}
+                       )" );
+
+  EXPECT_TRUE( db.iov_reduction() );
+
+  {
+    auto [data, iov] = db.get( {"", "Cond", 0} );
+    EXPECT_EQ( iov.since, 0 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 0" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 160} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 210} );
+    EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+    EXPECT_EQ( data, "data 2" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 260} );
+    EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+    EXPECT_EQ( data, "data 2" );
+  }
+
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 60} );
+    EXPECT_EQ( iov.since, 50 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+
+  // disable reduction
+  db.set_iov_reduction( false );
+  EXPECT_FALSE( db.iov_reduction() );
+  {
+    auto [data, iov] = db.get( {"", "Cond", 0} );
+    EXPECT_EQ( iov.since, 0 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 0" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 150 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 160} );
+    EXPECT_EQ( iov.since, 150 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 210} );
+    EXPECT_EQ( iov.since, 200 );
+    EXPECT_EQ( iov.until, 250 );
+    EXPECT_EQ( data, "data 2" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond", 260} );
+    EXPECT_EQ( iov.since, 250 );
+    EXPECT_EQ( iov.until, GitCondDB::CondDB::IOV::max() );
+    EXPECT_EQ( data, "data 2" );
+  }
+
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 60} );
+    EXPECT_EQ( iov.since, 50 );
+    EXPECT_EQ( iov.until, 100 );
+    EXPECT_EQ( data, "data 1" );
+  }
+  {
+    auto [data, iov] = db.get( {"", "Cond2", 110} );
+    EXPECT_EQ( iov.since, 100 );
+    EXPECT_EQ( iov.until, 200 );
+    EXPECT_EQ( data, "data 1" );
+  }
+}
+
 int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
