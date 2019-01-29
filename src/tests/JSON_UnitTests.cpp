@@ -20,8 +20,7 @@
 
 using namespace GitCondDB::v1;
 
-TEST( JSONImpl, Connection )
-{
+TEST( JSONImpl, Connection ) {
   {
     auto logger = std::make_shared<CapturingLogger>();
 
@@ -43,18 +42,14 @@ TEST( JSONImpl, Connection )
   EXPECT_TRUE( db.connected() );
 }
 
-TEST( JSONImpl, FailAccess )
-{
+TEST( JSONImpl, FailAccess ) {
   try {
     details::JSONImpl{"test_data/json/no-file"};
     FAIL() << "exception expected for invalid db";
-  } catch ( std::runtime_error& err ) {
-    EXPECT_EQ( std::string_view{err.what()}, "invalid JSON" );
-  }
+  } catch ( std::runtime_error& err ) { EXPECT_EQ( std::string_view{err.what()}, "invalid JSON" ); }
 }
 
-TEST( JSONImpl, AccessMemory )
-{
+TEST( JSONImpl, AccessMemory ) {
   auto logger = std::make_shared<CapturingLogger>();
 
   details::JSONImpl db{
@@ -135,8 +130,7 @@ TEST( JSONImpl, AccessMemory )
   EXPECT_EQ( db.commit_time( "HEAD" ), std::chrono::time_point<std::chrono::system_clock>::max() );
 }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }

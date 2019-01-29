@@ -19,20 +19,16 @@
 using namespace GitCondDB::v1;
 
 struct BasicLogger : Logger {
-  inline void print( std::string_view level, std::string_view msg ) const
-  {
+  inline void print( std::string_view level, std::string_view msg ) const {
     std::cout << std::left << std::setw( 7 ) << level << ':' << ' ' << msg << '\n';
   }
-  void warning( std::string_view msg ) const override
-  {
+  void warning( std::string_view msg ) const override {
     if ( level <= Level::Quiet ) print( "warning", msg );
   }
-  void info( std::string_view msg ) const override
-  {
+  void info( std::string_view msg ) const override {
     if ( level <= Level::Verbose ) print( "info", msg );
   }
-  void debug( std::string_view msg ) const override
-  {
+  void debug( std::string_view msg ) const override {
     if ( level <= Level::Debug ) print( "debug", msg );
   }
 };

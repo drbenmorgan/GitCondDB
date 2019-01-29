@@ -20,12 +20,9 @@
 #include <string_view>
 #include <vector>
 
-namespace GitCondDB
-{
-  inline namespace v1
-  {
-    namespace details
-    {
+namespace GitCondDB {
+  inline namespace v1 {
+    namespace details {
       struct DBImpl;
     }
 
@@ -61,16 +58,14 @@ namespace GitCondDB
         constexpr static time_point_t min() { return std::numeric_limits<time_point_t>::min(); }
         constexpr static time_point_t max() { return std::numeric_limits<time_point_t>::max(); }
 
-        IOV intersect( const IOV& boundary ) const
-        {
+        IOV intersect( const IOV& boundary ) const {
           return {std::max( since, boundary.since ), std::min( until, boundary.until )};
         }
         IOV& cut( const IOV& boundary ) { return *this = boundary.intersect( *this ); }
 
         bool valid() const { return since < until; }
         bool contains( const time_point_t point ) const { return point >= since && point < until; }
-        bool contains( const IOV& other ) const
-        {
+        bool contains( const IOV& other ) const {
           return other.valid() && contains( other.since ) && other.until > since && other.until <= until;
         }
         bool overlaps( const IOV& other ) const { return other.intersect( *this ).valid(); }
@@ -78,8 +73,7 @@ namespace GitCondDB
 
       /// RAII object to limit the time the connection to the repository stay open.
       /// The lifetime of the CondDB object must be longer than the AccessGuard.
-      class AccessGuard
-      {
+      class AccessGuard {
         friend struct CondDB;
         AccessGuard( const CondDB& db ) : db( db ) {}
 
@@ -102,8 +96,7 @@ namespace GitCondDB
 
       std::chrono::system_clock::time_point commit_time( const std::string& commit_id ) const;
 
-      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path ) const
-      {
+      std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path ) const {
         return iov_boundaries( tag, path, {} );
       }
       std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path,
@@ -119,19 +112,18 @@ namespace GitCondDB
       };
 
       using dir_converter_t = std::function<std::string( const dir_content& content )>;
-      dir_converter_t set_dir_converter( dir_converter_t converter )
-      {
+      dir_converter_t set_dir_converter( dir_converter_t converter ) {
         swap( m_dir_converter, converter );
         return converter;
       }
 
-      void set_logger( std::shared_ptr<Logger> logger );
+      void    set_logger( std::shared_ptr<Logger> logger );
       Logger* logger() const;
 
     private:
       CondDB( std::unique_ptr<details::DBImpl> impl );
 
-      void iov_boundaries_accumulate( const std::string& object_id, const IOV&  limits,
+      void iov_boundaries_accumulate( const std::string& object_id, const IOV& limits,
                                       std::vector<std::pair<IOV, std::string>>& acc ) const;
 
       std::unique_ptr<details::DBImpl> m_impl;
@@ -140,7 +132,7 @@ namespace GitCondDB
 
       friend GITCONDDB_EXPORT CondDB connect( std::string_view repository, std::shared_ptr<Logger> logger );
     };
-  }
-}
+  } // namespace v1
+} // namespace GitCondDB
 
 #endif // GITCONDDB_H

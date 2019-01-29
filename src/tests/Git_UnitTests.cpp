@@ -20,8 +20,7 @@
 
 using namespace GitCondDB::v1;
 
-TEST( GitImpl, Connection )
-{
+TEST( GitImpl, Connection ) {
   auto logger = std::make_shared<CapturingLogger>();
 
   details::GitImpl db{"test_data/repo.git", logger};
@@ -42,8 +41,7 @@ TEST( GitImpl, Connection )
   EXPECT_TRUE( db.connected() );
 }
 
-void access_test( const details::GitImpl& db )
-{
+void access_test( const details::GitImpl& db ) {
   auto logger = std::make_shared<CapturingLogger>();
   const_cast<details::GitImpl&>( db ).set_logger( logger );
 
@@ -96,8 +94,7 @@ void access_test( const details::GitImpl& db )
 
 TEST( GitImpl, Access ) { access_test( details::GitImpl{"test_data/repo"} ); }
 
-TEST( GitImpl, FailAccess )
-{
+TEST( GitImpl, FailAccess ) {
   try {
     details::GitImpl{"test_data/no-repo"};
     FAIL() << "exception expected for invalid db";
@@ -108,8 +105,7 @@ TEST( GitImpl, FailAccess )
 
 TEST( GitImpl, AccessBare ) { access_test( details::GitImpl{"test_data/repo.git"} ); }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }

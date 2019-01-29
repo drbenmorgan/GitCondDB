@@ -18,8 +18,7 @@
 
 using namespace GitCondDB::v1;
 
-TEST( IOVHelpers, ParseIOVs )
-{
+TEST( IOVHelpers, ParseIOVs ) {
   using GitCondDB::Helpers::get_key_iov;
 
   const std::string test_data{"0 a\n"
@@ -28,28 +27,28 @@ TEST( IOVHelpers, ParseIOVs )
                               "300 d\n"};
 
   {
-    auto[key, iov] = get_key_iov( test_data, 0 );
+    auto [key, iov] = get_key_iov( test_data, 0 );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "a" );
     EXPECT_EQ( iov.since, 0 );
     EXPECT_EQ( iov.until, 100 );
   }
   {
-    auto[key, iov] = get_key_iov( test_data, 100 );
+    auto [key, iov] = get_key_iov( test_data, 100 );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "b" );
     EXPECT_EQ( iov.since, 100 );
     EXPECT_EQ( iov.until, 200 );
   }
   {
-    auto[key, iov] = get_key_iov( test_data, 230 );
+    auto [key, iov] = get_key_iov( test_data, 230 );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "c" );
     EXPECT_EQ( iov.since, 200 );
     EXPECT_EQ( iov.until, 300 );
   }
   {
-    auto[key, iov] = get_key_iov( test_data, 500 );
+    auto [key, iov] = get_key_iov( test_data, 500 );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "d" );
     EXPECT_EQ( iov.since, 300 );
@@ -57,14 +56,14 @@ TEST( IOVHelpers, ParseIOVs )
   }
 
   {
-    auto[key, iov] = get_key_iov( test_data, 240, {210, 1000} );
+    auto [key, iov] = get_key_iov( test_data, 240, {210, 1000} );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "c" );
     EXPECT_EQ( iov.since, 210 );
     EXPECT_EQ( iov.until, 300 );
   }
   {
-    auto[key, iov] = get_key_iov( test_data, 500, {210, 1000} );
+    auto [key, iov] = get_key_iov( test_data, 500, {210, 1000} );
     EXPECT_TRUE( iov.valid() );
     EXPECT_EQ( key, "d" );
     EXPECT_EQ( iov.since, 300 );
@@ -72,7 +71,7 @@ TEST( IOVHelpers, ParseIOVs )
   }
 
   {
-    auto[key, iov] = get_key_iov( test_data, 2000, {210, 1000} );
+    auto [key, iov] = get_key_iov( test_data, 2000, {210, 1000} );
     EXPECT_FALSE( iov.valid() );
     EXPECT_EQ( key, "" );
   }
@@ -80,8 +79,7 @@ TEST( IOVHelpers, ParseIOVs )
 
 using IOV = CondDB::IOV;
 
-TEST( IOV, Validity )
-{
+TEST( IOV, Validity ) {
   const IOV reference{10, 20};
 
   const IOV bad1{10, 10};
@@ -92,8 +90,7 @@ TEST( IOV, Validity )
   EXPECT_FALSE( bad2.valid() );
 }
 
-TEST( IOV, Intersect )
-{
+TEST( IOV, Intersect ) {
   for ( CondDB::time_point_t a : std::vector<CondDB::time_point_t>{90, 100, 110} ) {
     for ( CondDB::time_point_t b : std::vector<CondDB::time_point_t>{190, 200, 210} ) {
       const auto res   = IOV{100, 200}.intersect( IOV{a, b} );
@@ -114,8 +111,7 @@ TEST( IOV, Intersect )
   }
 }
 
-TEST( IOV, Cut )
-{
+TEST( IOV, Cut ) {
   IOV iov{100, 200};
 
   EXPECT_EQ( iov.since, 100 );
@@ -157,8 +153,7 @@ TEST( IOV, Cut )
     EXPECT_FALSE( reference.contains( other ) );                                                                       \
   }
 
-TEST( IOV, Contains )
-{
+TEST( IOV, Contains ) {
   const IOV reference{10, 20};
 
   EXPECT_TRUE( reference.contains( 10 ) );
@@ -196,8 +191,7 @@ TEST( IOV, Contains )
     EXPECT_FALSE( reference.overlaps( other ) );                                                                       \
   }
 
-TEST( IOV, Overlaps )
-{
+TEST( IOV, Overlaps ) {
   OVERLAPS_TRUE( 10, 20, 10, 20 );
   OVERLAPS_TRUE( 10, 20, 11, 19 );
   OVERLAPS_TRUE( 10, 20, 5, 25 );
@@ -214,8 +208,7 @@ TEST( IOV, Overlaps )
   OVERLAPS_FALSE( 10, 20, 25, 30 );
 }
 
-int main( int argc, char** argv )
-{
+int main( int argc, char** argv ) {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();
 }

@@ -20,8 +20,7 @@
 #include <vector>
 
 struct CapturingLogger : GitCondDB::Logger {
-  inline void capture( std::string_view level, std::string_view msg ) const
-  {
+  inline void capture( std::string_view level, std::string_view msg ) const {
     logged_messages.emplace_back( level, msg );
     std::cout << std::left << std::setw( 7 ) << level << ':' << ' ' << msg << '\n';
   }
@@ -29,12 +28,10 @@ struct CapturingLogger : GitCondDB::Logger {
   void info( std::string_view msg ) const override { capture( "info", msg ); }
   void debug( std::string_view msg ) const override { capture( "debug", msg ); }
 
-  bool contains( std::string_view sub ) const
-  {
+  bool contains( std::string_view sub ) const {
     return logged_messages.size() && ( std::get<1>( logged_messages.back() ).find( sub ) != std::string::npos );
   }
-  bool contains( std::size_t idx, std::string_view sub ) const
-  {
+  bool contains( std::size_t idx, std::string_view sub ) const {
     return ( logged_messages.size() > idx ) && ( std::get<1>( logged_messages[idx] ).find( sub ) != std::string::npos );
   }
 

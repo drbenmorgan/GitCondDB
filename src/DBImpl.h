@@ -14,10 +14,10 @@
 #include <GitCondDB.h>
 
 #if __GNUC__ >= 8
-#include <filesystem>
+#  include <filesystem>
 namespace fs = std::filesystem;
 #else
-#include <experimental/filesystem>
+#  include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #endif
 
@@ -31,15 +31,11 @@ namespace fs = std::experimental::filesystem;
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
-namespace GitCondDB
-{
-  inline namespace v1
-  {
-    namespace details
-    {
+namespace GitCondDB {
+  inline namespace v1 {
+    namespace details {
       template <class RET, class FUNC, class... ARGS>
-      RET git_call( std::string_view err_msg, std::string_view key, FUNC func, ARGS&&... args )
-      {
+      RET git_call( std::string_view err_msg, std::string_view key, FUNC func, ARGS&&... args ) {
         typename RET::element_type* tmp = nullptr;
         if ( UNLIKELY( func( &tmp, std::forward<ARGS>( args )... ) ) )
           throw std::runtime_error{std::string{err_msg} + " " + std::string{key} + ": " + giterr_last()->message};
@@ -53,8 +49,7 @@ namespace GitCondDB
         void debug( std::string_view ) const override {}
       };
 
-      class DBImpl
-      {
+      class DBImpl {
       public:
         using dir_content = CondDB::dir_content;
 
@@ -70,8 +65,7 @@ namespace GitCondDB
 
         virtual std::chrono::system_clock::time_point commit_time( const char* commit_id ) const = 0;
 
-        inline static std::string_view strip_tag( std::string_view object_id )
-        {
+        inline static std::string_view strip_tag( std::string_view object_id ) {
           if ( const auto pos = object_id.find_first_of( ':' ); pos != object_id.npos ) {
             object_id.remove_prefix( pos + 1 );
           }
@@ -80,8 +74,7 @@ namespace GitCondDB
 
         DBImpl( std::shared_ptr<Logger> logger ) { set_logger( std::move( logger ) ); }
 
-        void set_logger( std::shared_ptr<Logger> logger )
-        {
+        void set_logger( std::shared_ptr<Logger> logger ) {
           if ( logger ) {
             log.swap( logger );
           } else {
@@ -99,8 +92,7 @@ namespace GitCondDB
         std::shared_ptr<Logger> log;
       };
 
-      class GitImpl : public DBImpl
-      {
+      class GitImpl : public DBImpl {
         using git_object_ptr     = GitCondDB::Helpers::git_object_ptr;
         using git_repository_ptr = GitCondDB::Helpers::git_repository_ptr;
 
@@ -114,8 +106,7 @@ namespace GitCondDB
                                                                   git_repository_open, m_repository_url.c_str() );
               if ( UNLIKELY( !res ) ) throw std::runtime_error{"invalid Git repository: '" + m_repository_url + "'"};
               return res;
-            }}
-        {
+            }} {
           // Initialize Git library
           git_libgit2_init();
 
@@ -123,22 +114,19 @@ namespace GitCondDB
           m_repository.get();
         }
 
-        ~GitImpl() override
-        {
+        ~GitImpl() override {
           // Finalize Git library
           git_libgit2_shutdown();
         }
 
-        void disconnect() const override
-        {
+        void disconnect() const override {
           debug( "disconnect from Git repository" );
           m_repository.reset();
         }
 
         bool connected() const override { return m_repository.is_set(); }
 
-        bool exists( const char* object_id ) const override
-        {
+        bool exists( const char* object_id ) const override {
           git_object* tmp = nullptr;
           git_revparse_single( &tmp, m_repository.get(), object_id );
           bool result = tmp;
@@ -146,11 +134,10 @@ namespace GitCondDB
           return result;
         }
 
-        std::variant<std::string, dir_content> get( const char* object_id ) const override
-        {
+        std::variant<std::string, dir_content> get( const char* object_id ) const override {
           debug( std::string{"get Git object "} + object_id );
           std::variant<std::string, dir_content> out;
-          auto obj = get_object( object_id );
+          auto                                   obj = get_object( object_id );
           if ( git_object_type( obj.get() ) == GIT_OBJ_TREE ) {
             debug( "found tree object" );
 
@@ -178,16 +165,14 @@ namespace GitCondDB
           return out;
         }
 
-        std::chrono::system_clock::time_point commit_time( const char* commit_id ) const override
-        {
+        std::chrono::system_clock::time_point commit_time( const char* commit_id ) const override {
           auto obj = get_object( commit_id, "commit" );
           return std::chrono::system_clock::from_time_t(
               git_commit_time( reinterpret_cast<git_commit*>( obj.get() ) ) );
         }
 
       private:
-        git_object_ptr get_object( const char* commit_id, const std::string& obj_type = "object" ) const
-        {
+        git_object_ptr get_object( const char* commit_id, const std::string& obj_type = "object" ) const {
           return git_call<git_object_ptr>( "cannot resolve " + obj_type, commit_id, git_revparse_single,
                                            m_repository.get(), commit_id );
         }
@@ -197,12 +182,10 @@ namespace GitCondDB
         mutable git_repository_ptr m_repository;
       };
 
-      class FilesystemImpl : public DBImpl
-      {
+      class FilesystemImpl : public DBImpl {
       public:
         FilesystemImpl( std::string_view root, std::shared_ptr<Logger> logger = nullptr )
-            : DBImpl{std::move( logger )}, m_root( root )
-        {
+            : DBImpl{std::move( logger )}, m_root( root ) {
           info( fmt::format( "using files from '{}'", m_root.string() ) );
           if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
@@ -211,17 +194,15 @@ namespace GitCondDB
 
         bool connected() const override { return true; }
 
-        bool exists( const char* object_id ) const override
-        {
+        bool exists( const char* object_id ) const override {
           // return true for any tag name (i.e. id without a ':') and existing paths
           const std::string_view id{object_id};
           return id.find_first_of( ':' ) == id.npos || fs::exists( to_path( id ) );
         }
 
-        std::variant<std::string, dir_content> get( const char* object_id ) const override
-        {
+        std::variant<std::string, dir_content> get( const char* object_id ) const override {
           std::variant<std::string, dir_content> out;
-          const auto path = to_path( object_id );
+          const auto                             path = to_path( object_id );
 
           debug( std::string{"accessing path "} + path.string() );
 
@@ -254,8 +235,7 @@ namespace GitCondDB
           return out;
         }
 
-        std::chrono::system_clock::time_point commit_time( const char* ) const override
-        {
+        std::chrono::system_clock::time_point commit_time( const char* ) const override {
           return std::chrono::time_point<std::chrono::system_clock>::max();
         }
 
@@ -265,13 +245,11 @@ namespace GitCondDB
         fs::path m_root;
       };
 
-      class JSONImpl : public DBImpl
-      {
+      class JSONImpl : public DBImpl {
         using json = nlohmann::json;
 
       public:
-        JSONImpl( std::string_view data, std::shared_ptr<Logger> logger = nullptr ) : DBImpl{std::move( logger )}
-        {
+        JSONImpl( std::string_view data, std::shared_ptr<Logger> logger = nullptr ) : DBImpl{std::move( logger )} {
           if ( data.find_first_of( '{' ) != data.npos ) {
             info( "using JSON data from memory" );
             m_json = json::parse( data );
@@ -288,15 +266,13 @@ namespace GitCondDB
 
         bool connected() const override { return true; }
 
-        bool exists( const char* object_id ) const override
-        {
+        bool exists( const char* object_id ) const override {
           // return true for any tag name (i.e. id without a ':') and existing paths
           const std::string_view id{object_id};
           return id.find_first_of( ':' ) == id.npos || !m_json.value( to_path( object_id ), json{} ).is_null();
         }
 
-        std::variant<std::string, dir_content> get( const char* object_id ) const override
-        {
+        std::variant<std::string, dir_content> get( const char* object_id ) const override {
           std::variant<std::string, dir_content> out;
 
           const auto path = to_path( object_id );
@@ -328,22 +304,20 @@ namespace GitCondDB
           return out;
         }
 
-        std::chrono::system_clock::time_point commit_time( const char* ) const override
-        {
+        std::chrono::system_clock::time_point commit_time( const char* ) const override {
           return std::chrono::time_point<std::chrono::system_clock>::max();
         }
 
       private:
-        inline json::json_pointer to_path( std::string_view object_id ) const
-        {
+        inline json::json_pointer to_path( std::string_view object_id ) const {
           const auto path = strip_tag( object_id );
           return json::json_pointer{path.empty() ? std::string{} : std::string{'/'} + std::string{path}};
         }
 
         json m_json;
       };
-    }
-  }
-}
+    } // namespace details
+  }   // namespace v1
+} // namespace GitCondDB
 
 #endif // DBIMPL_H
