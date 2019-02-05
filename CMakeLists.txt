@@ -102,7 +102,8 @@ install(TARGETS GitCondDB EXPORT GitCondDBTargets
       COMPONENT Runtime
     PUBLIC_HEADER
       DESTINATION include
-      COMPONENT Devel)
+      COMPONENT Devel
+    INCLUDES DESTINATION include)
 
 
 # package exports
@@ -122,9 +123,11 @@ configure_package_config_file(cmake/GitCondDBConfig.cmake.in
 )
 
 export(EXPORT GitCondDBTargets
+    NAMESPACE GitCondDB::
     FILE "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBTargets.cmake")
 
 install(EXPORT GitCondDBTargets
+  NAMESPACE GitCondDB::
     DESTINATION ${ConfigPackageLocation})
 
 install(
