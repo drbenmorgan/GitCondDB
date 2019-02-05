@@ -149,7 +149,9 @@ if(NOT GTEST_FOUND)
   if(IS_DIRECTORY /usr/src/googletest)
     set(GTEST_SOURCES SOURCE_DIR /usr/src/googletest)
   else()
-    message(FATAL_ERROR "getting GTest sources not supported yet")
+    set(GTEST_SOURCES
+      URL https://github.com/google/googletest/archive/release-1.8.1.tar.gz
+      URL_HASH SHA256=9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c)
   endif()
 
   ExternalProject_Add(googletest-distribution
