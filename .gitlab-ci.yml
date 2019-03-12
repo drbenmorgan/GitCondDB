@@ -31,7 +31,7 @@ ubuntu-image:
 
 build-ubuntu-rel:
   stage: build
-  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   script:
     - mkdir -p ${BUILDDIR}
     - cd ${BUILDDIR}
@@ -43,7 +43,7 @@ build-ubuntu-rel:
 
 test-ubuntu-rel:
   stage: test
-  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   dependencies: [build-ubuntu-rel]
   script:
     - find ${BUILDDIR} -type f -exec touch -d $(date +@%s) \{} \;
@@ -52,7 +52,7 @@ test-ubuntu-rel:
 
 build-ubuntu-cov:
   stage: build
-  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   script:
     - mkdir -p ${BUILDDIR}
     - cd ${BUILDDIR}
@@ -64,7 +64,7 @@ build-ubuntu-cov:
 
 test-ubuntu-cov:
   stage: test
-  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   dependencies: [build-ubuntu-cov]
   script:
     - find ${BUILDDIR} -type f -exec touch -d $(date +@%s) \{} \;
@@ -78,8 +78,8 @@ test-ubuntu-cov:
 
 
 code-format:
-  stage: test
-  image: ${CI_REGISTRY_IMAGE}:ubuntu
+  stage: build
+  image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   dependencies: []
   script:
     - git fetch origin master
