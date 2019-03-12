@@ -50,7 +50,7 @@ if(NOT JSON_INCLUDE_DIR)
 endif()
 include_directories("${JSON_INCLUDE_DIR}")
 
-find_package(fmt REQUIRED)
+find_package(fmt 5.2 REQUIRED)
 
 
 include(GenerateExportHeader)
