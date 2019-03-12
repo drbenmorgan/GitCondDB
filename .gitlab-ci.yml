@@ -78,7 +78,7 @@ test-ubuntu-cov:
 
 
 code-format:
-  stage: test
+  stage: build
   image: gitlab-registry.cern.ch/lhcb/gitconddb:ubuntu
   dependencies: []
   script:
