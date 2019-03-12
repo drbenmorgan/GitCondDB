@@ -35,7 +35,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # external dependencies
 
 find_package(PkgConfig)
-pkg_check_modules(git2 libgit2 REQUIRED)
+pkg_check_modules(git2 libgit2 REQUIRED IMPORTED_TARGET)
 
 find_path(JSON_INCLUDE_DIR NAMES nlohmann/json.hpp)
 if(NOT JSON_INCLUDE_DIR)
@@ -58,7 +58,7 @@ include(GenerateExportHeader)
 
 # Build instructions
 
-set(HEAERS include/GitCondDB.h)
+set(HEADERS include/GitCondDB.h)
 set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/BasicLogger.h src/GitCondDB.cpp)
 
 add_library(GitCondDB ${HEADERS} ${SOURCES})
@@ -67,8 +67,8 @@ generate_export_header(GitCondDB)
 # Generate a version header
 configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
 
-target_include_directories(GitCondDB PRIVATE include ${git2_INCLUDE_DIRS})
-target_link_libraries(GitCondDB PRIVATE ${git2_LIBRARIES} fmt::fmt)
+target_include_directories(GitCondDB PRIVATE include)
+target_link_libraries(GitCondDB PRIVATE PkgConfig::git2 fmt::fmt)
 target_link_libraries(GitCondDB PUBLIC stdc++fs)
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
@@ -210,7 +210,7 @@ include(GoogleTest)
 foreach(subsystem CondDB  FS  Git  Helpers  JSON)
   add_executable(test_${subsystem} src/tests/test_common.h src/tests/${subsystem}_UnitTests.cpp)
   target_include_directories(test_${subsystem} PRIVATE include src)
-  target_link_libraries(test_${subsystem} GitCondDB ${git2_LIBRARIES} fmt::fmt GTest::GTest GTest::Main)
+  target_link_libraries(test_${subsystem} GitCondDB PkgConfig::git2 fmt::fmt GTest::GTest GTest::Main)
   if(TARGET googletest-distribution)
     add_dependencies(test_${subsystem} googletest-distribution)
   endif()
