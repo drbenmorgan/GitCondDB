@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.1][] - 2019-04-11
 
 ### Fixed
-- Make `CondDB` moveable and add test that checks it (lhcb/GitCondDB!18)
+- Make `CondDB` moveable and add test that checks it (lhcb/GitCondDB!17)
 
 ## 0.1.0 - 2019-03-12
 First official version.
