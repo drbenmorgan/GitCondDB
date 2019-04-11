@@ -210,7 +210,7 @@ add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
 # - unit test executables
 include(GoogleTest)
 
-foreach(subsystem CondDB  FS  Git  Helpers  JSON)
+foreach(subsystem CondDB  CondDBMove FS  Git  Helpers  JSON)
   add_executable(test_${subsystem} src/tests/test_common.h src/tests/${subsystem}_UnitTests.cpp)
   target_include_directories(test_${subsystem} PRIVATE include src)
   target_link_libraries(test_${subsystem} GitCondDB PkgConfig::git2 fmt::fmt GTest::GTest GTest::Main)

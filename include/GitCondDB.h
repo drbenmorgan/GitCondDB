@@ -102,7 +102,7 @@ namespace GitCondDB {
       std::vector<time_point_t> iov_boundaries( std::string_view tag, std::string_view path,
                                                 const IOV& boundaries ) const;
 
-      CondDB( CondDB&& ) = default;
+      CondDB( CondDB&& );
       ~CondDB();
 
       struct dir_content {
