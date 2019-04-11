@@ -59,6 +59,9 @@ CondDB::CondDB( std::unique_ptr<details::DBImpl> impl )
     : m_impl{std::move( impl )}, m_dir_converter{json_dir_converter} {
   assert( m_impl );
 }
+
+CondDB::CondDB( CondDB&& ) = default;
+
 CondDB::~CondDB() {}
 
 void CondDB::set_logger( std::shared_ptr<Logger> logger ) { m_impl->set_logger( std::move( logger ) ); }
