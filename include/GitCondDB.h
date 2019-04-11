@@ -18,6 +18,7 @@
 #include <limits>
 #include <memory>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace GitCondDB {
@@ -113,8 +114,7 @@ namespace GitCondDB {
 
       using dir_converter_t = std::function<std::string( const dir_content& content )>;
       dir_converter_t set_dir_converter( dir_converter_t converter ) {
-        swap( m_dir_converter, converter );
-        return converter;
+        return std::exchange( m_dir_converter, std::move( converter ) );
       }
 
       void    set_logger( std::shared_ptr<Logger> logger );
