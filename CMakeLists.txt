@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.10)
 project(GitCondDB VERSION 0.1.0)
 
 execute_process(COMMAND git describe --tags --always --first-parent HEAD
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
   OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 
@@ -39,14 +39,14 @@ pkg_check_modules(git2 libgit2 REQUIRED IMPORTED_TARGET)
 
 find_path(JSON_INCLUDE_DIR NAMES nlohmann/json.hpp)
 if(NOT JSON_INCLUDE_DIR)
-  file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp "${CMAKE_BINARY_DIR}/nlohmann/json.hpp"
+  file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp "${PROJECT_BINARY_DIR}/nlohmann/json.hpp"
     SHOW_PROGRESS STATUS JSON_HPP_DOWNLOAD_STATUS
     EXPECTED_HASH MD5=d7e8c50249635575d3271e41dda4e7c7)
   list(GET JSON_HPP_DOWNLOAD_STATUS 0 JSON_HPP_DOWNLOAD_STATUS)
   if(NOT JSON_HPP_DOWNLOAD_STATUS EQUAL 0)
     message(FATAL_ERROR "Could not download json.hpp")
   endif()
-  set(JSON_INCLUDE_DIR "${CMAKE_BINARY_DIR}" CACHE PATH "Path to nlohmann/json.hpp" FORCE)
+  set(JSON_INCLUDE_DIR "${PROJECT_BINARY_DIR}" CACHE PATH "Path to nlohmann/json.hpp" FORCE)
 endif()
 include_directories("${JSON_INCLUDE_DIR}")
 
@@ -200,12 +200,12 @@ endif()
 
 add_custom_command(
   COMMENT "Generating test data"
-  OUTPUT ${CMAKE_BINARY_DIR}/test_data/.stamp
-  COMMAND Python::Interpreter ${CMAKE_SOURCE_DIR}/tests/prepare_test_data.py
+  OUTPUT ${PROJECT_BINARY_DIR}/test_data/.stamp
+  COMMAND Python::Interpreter ${PROJECT_SOURCE_DIR}/tests/prepare_test_data.py
   COMMAND ${CMAKE_COMMAND} -E touch test_data/.stamp
   DEPENDS tests/prepare_test_data.py)
 
-add_custom_target(TestData DEPENDS ${CMAKE_BINARY_DIR}/test_data/.stamp)
+add_custom_target(TestData DEPENDS ${PROJECT_BINARY_DIR}/test_data/.stamp)
 
 # - unit test executables
 include(GoogleTest)
@@ -232,7 +232,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
       COMMENT "Cleaning coverage statistics")
     add_custom_target(generate-coverage-report
       COMMAND ${lcov_COMMAND} --quiet --capture --directory . --output-file coverage.info
-      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${CMAKE_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '*/BasicLogger.h' '${CMAKE_SOURCE_DIR}/src/tests/*'
+      COMMAND ${lcov_COMMAND} --quiet --output-file coverage.info --remove coverage.info '${PROJECT_BINARY_DIR}/googletest-distribution-prefix/*' '/usr/*' '*/json.hpp' '*/BasicLogger.h' '${PROJECT_SOURCE_DIR}/src/tests/*'
       COMMAND ${CMAKE_COMMAND} -E remove_directory coverage_report
       COMMAND ${genhtml_COMMAND} coverage.info --output-directory coverage_report
       COMMENT "Generate coverage report")
