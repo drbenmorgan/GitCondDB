@@ -8,10 +8,8 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+# Project setup
 cmake_minimum_required(VERSION 3.10)
-
-# Project settings
-
 project(GitCondDB VERSION 0.1.0)
 
 # Find/use git if available
@@ -26,6 +24,11 @@ if(Git_FOUND)
     OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
 
+# Project modules
+include(GenerateExportHeader)
+include(GNUInstallDirs)
+
+# Project optional/fixed settings
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
 
@@ -33,7 +36,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
 set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -g -O0 --coverage")
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
@@ -60,37 +62,32 @@ include_directories("${JSON_INCLUDE_DIR}")
 find_package(fmt 5.2 REQUIRED)
 
 
-include(GenerateExportHeader)
-
-
 # Build instructions
-
-set(HEADERS include/GitCondDB.h)
-set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/BasicLogger.h src/GitCondDB.cpp)
-
-add_library(GitCondDB ${HEADERS} ${SOURCES})
-generate_export_header(GitCondDB)
-
 # Generate a version header
 configure_file(cmake/GitCondDBVersion.h.in GitCondDBVersion.h)
 
-target_include_directories(GitCondDB PRIVATE include)
+set(HEADERS include/GitCondDB.h "${CMAKE_CURRENT_BINARY_DIR}/GitCondDBVersion.h")
+set(SOURCES src/common.h src/git_helpers.h src/iov_helpers.h src/DBImpl.h src/BasicLogger.h src/GitCondDB.cpp)
+
+# Target, export header, and alias for importing as subproject
+add_library(GitCondDB ${HEADERS} ${SOURCES})
+generate_export_header(GitCondDB)
+add_library(GitCondDB::GitCondDB ALIAS GitCondDB)
+
+# Usage requirements, properties
+target_compile_features(GitCondDB PUBLIC cxx_std_17)
+target_include_directories(GitCondDB PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(GitCondDB PRIVATE PkgConfig::git2 fmt::fmt)
 target_link_libraries(GitCondDB PUBLIC stdc++fs)
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
 set_property(TARGET GitCondDB PROPERTY SOVERSION 1)
-set_property(TARGET GitCondDB PROPERTY
-  INTERFACE_GitCondDB_MAJOR_VERSION 1)
-set_property(TARGET GitCondDB APPEND PROPERTY
-  COMPATIBLE_INTERFACE_STRING GitCondDB_MAJOR_VERSION
-)
-set_property(TARGET GitCondDB PROPERTY
-  PUBLIC_HEADER ${HEADERS})
-set_property(TARGET GitCondDB APPEND PROPERTY
-  PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h" "${CMAKE_CURRENT_BINARY_DIR}/GitCondDBVersion.h")
-
-target_compile_features(GitCondDB PUBLIC cxx_std_17)
+set_property(TARGET GitCondDB PROPERTY INTERFACE_GitCondDB_MAJOR_VERSION 1)
+set_property(TARGET GitCondDB APPEND PROPERTY COMPATIBLE_INTERFACE_STRING GitCondDB_MAJOR_VERSION)
+set_property(TARGET GitCondDB PROPERTY PUBLIC_HEADER ${HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/gitconddb_export.h")
 
 set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_RELEASE -DNDEBUG)
 set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_RELWITHDEBINFO -DNDEBUG)
@@ -100,24 +97,23 @@ set_property(TARGET GitCondDB PROPERTY COMPILE_DEFINITIONS_MINSIZEREL -DNDEBUG)
 # installation
 
 install(TARGETS GitCondDB EXPORT GitCondDBTargets
-    LIBRARY DESTINATION lib
-      COMPONENT Runtime
-      #NAMELINK_COMPONENT Devel
-    ARCHIVE DESTINATION lib
-      COMPONENT Devel
-    RUNTIME DESTINATION bin
-      COMPONENT Runtime
-    PUBLIC_HEADER
-      DESTINATION include
-      COMPONENT Devel
-    INCLUDES DESTINATION include)
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT Runtime
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT Devel
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Runtime
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT Devel
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 
 # package exports
 
 include(CMakePackageConfigHelpers)
 
-set(ConfigPackageLocation lib/cmake/GitCondDB)
+set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/GitCondDB)
 
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
@@ -138,13 +134,13 @@ install(EXPORT GitCondDBTargets
     DESTINATION ${ConfigPackageLocation})
 
 install(
-    FILES
-      "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfig.cmake"
-      "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
-    DESTINATION
-      ${ConfigPackageLocation}
-    COMPONENT
-      Devel
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
+  DESTINATION
+    ${ConfigPackageLocation}
+  COMPONENT
+    Devel
 )
 
 
