@@ -14,10 +14,17 @@ cmake_minimum_required(VERSION 3.10)
 
 project(GitCondDB VERSION 0.1.0)
 
-execute_process(COMMAND git describe --tags --always --first-parent HEAD
-  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-  OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+# Find/use git if available
+find_package(Git QUIET)
+if(Git_FOUND)
+  if(GIT_VERSION_STRING VERSION_GREATER_EQUAL 1.8.4)
+    set(GitCondDB_GIT_DESCRIBE_FPARG "--first-parent")
+  endif()
 
+  execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always ${GitCondDB_GIT_DESCRIBE_FPARG} HEAD
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    OUTPUT_VARIABLE GitCondDB_GIT_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "" ON)
