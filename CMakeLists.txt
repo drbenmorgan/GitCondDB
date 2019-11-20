@@ -46,6 +46,49 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(PkgConfig)
 pkg_check_modules(git2 libgit2 REQUIRED IMPORTED_TARGET)
 
+# Check for the C++ filesystem implementation
+# 1. Full Native
+try_compile(CPPFS_IS_NATIVE
+  ${CMAKE_CURRENT_BINARY_DIR}/_cppfs_check/native
+  ${PROJECT_SOURCE_DIR}/cmake/cppfs-check.cpp
+  CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON)
+
+# 2. Native plus support library (GNU/Clang)
+if(NOT CPPFS_IS_NATIVE)
+  # GNU libstdc++fs
+  try_compile(CPPFS_IS_STDCPPFS
+    ${CMAKE_CURRENT_BINARY_DIR}/_cppfs_check/stdc++fs
+    ${PROJECT_SOURCE_DIR}/cmake/cppfs-check.cpp
+    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    LINK_LIBRARIES stdc++fs
+    )
+  # LLVM libc++fs
+  try_compile(CPPFS_IS_CPPFS
+    ${CMAKE_CURRENT_BINARY_DIR}/_cppfs_check/c++fs
+    ${PROJECT_SOURCE_DIR}/cmake/cppfs-check.cpp
+    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    LINK_LIBRARIES c++fs
+    )
+  # Fallback to Boost otherwsie
+  if(NOT CPPFS_IS_STDCPPFS AND NOT CPPFS_IS_CPPFS)
+    find_package(Boost 1.63 REQUIRED filesystem)
+    set(CPPFS_IS_BOOSTFS TRUE)
+  endif()
+
+  # Set up needed linking and support
+  if(CPPFS_IS_STDCPPFS)
+    set(GitCondDB_FSImpl stdc++fs)
+  elseif(CPPFS_IS_CPPFS)
+    set(GitCondDB_FSImpl c++fs)
+  elseif(CPPFS_IS_BOOSTFS)
+    set(GitCondDB_FSImpl Boost::filesystem)
+    configure_file(cmake/GitCondDBFSShim.cmake.in
+      "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBFSShim.cmake" @ONLY)
+  else()
+    message(FATAL_ERROR "No compiler or Boost support for C++ filesystem")
+  endif()
+endif()
+
 find_path(JSON_INCLUDE_DIR NAMES nlohmann/json.hpp)
 if(NOT JSON_INCLUDE_DIR)
   file(DOWNLOAD https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp "${PROJECT_BINARY_DIR}/nlohmann/json.hpp"
@@ -75,13 +118,14 @@ generate_export_header(GitCondDB)
 add_library(GitCondDB::GitCondDB ALIAS GitCondDB)
 
 # Usage requirements, properties
+target_compile_definitions(GitCondDB PRIVATE $<$<BOOL:${CPPFS_IS_BOOSTFS}>:CPPFS_IS_BOOSTFS>)
 target_compile_features(GitCondDB PUBLIC cxx_std_17)
 target_include_directories(GitCondDB PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(GitCondDB PRIVATE PkgConfig::git2 fmt::fmt)
-target_link_libraries(GitCondDB PUBLIC stdc++fs)
+target_link_libraries(GitCondDB PUBLIC ${GitCondDB_FSImpl})
 
 set_property(TARGET GitCondDB PROPERTY VERSION ${GitCondDB_VERSION})
 set_property(TARGET GitCondDB PROPERTY SOVERSION 1)
@@ -129,16 +173,11 @@ install(EXPORT GitCondDBTargets
   NAMESPACE GitCondDB::
     DESTINATION ${ConfigPackageLocation})
 
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/GitCondDBConfigVersion.cmake"
-  DESTINATION
-    ${ConfigPackageLocation}
-  COMPONENT
-    Devel
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/GitCondDB/"
+  DESTINATION "${ConfigPackageLocation}"
+  COMPONENT Devel
+  PATTERN "GitCondDBTargets*" EXCLUDE
 )
-
 
 # testing
 enable_testing()
@@ -211,6 +250,7 @@ include(GoogleTest)
 
 foreach(subsystem CondDB  CondDBMove FS  Git  Helpers  JSON)
   add_executable(test_${subsystem} src/tests/test_common.h src/tests/${subsystem}_UnitTests.cpp)
+  target_compile_definitions(test_${subsystem} PRIVATE $<$<BOOL:${CPPFS_IS_BOOSTFS}>:CPPFS_IS_BOOSTFS>)
   target_include_directories(test_${subsystem} PRIVATE include src)
   target_link_libraries(test_${subsystem} GitCondDB PkgConfig::git2 fmt::fmt GTest::GTest GTest::Main)
   if(TARGET googletest-distribution)

@@ -13,12 +13,17 @@
 
 #include <GitCondDB.h>
 
-#if __GNUC__ >= 8
-#  include <filesystem>
-namespace fs = std::filesystem;
+#if defined( CPPFS_IS_BOOSTFS )
+#  include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
 #else
-#  include <experimental/filesystem>
+#  if __has_include( <filesystem>)
+#    include <filesystem>
+namespace fs = std::filesystem;
+#  elif __has_include( <experimental/filesystem>)
+#    include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
+#  endif
 #endif
 
 #include "git_helpers.h"
@@ -185,7 +190,12 @@ namespace GitCondDB {
       class FilesystemImpl : public DBImpl {
       public:
         FilesystemImpl( std::string_view root, std::shared_ptr<Logger> logger = nullptr )
+// Boost filesystem needs an explicit string (AppleClang 10/High Sierra)
+#ifdef CPPFS_IS_BOOSTFS
+            : DBImpl{std::move( logger )}, m_root( std::string{root} ) {
+#else
             : DBImpl{std::move( logger )}, m_root( root ) {
+#endif
           info( fmt::format( "using files from '{}'", m_root.string() ) );
           if ( !is_directory( m_root ) ) throw std::runtime_error{"invalid path " + m_root.string()};
         }
@@ -213,7 +223,12 @@ namespace GitCondDB {
             entries.root = strip_tag( object_id );
 
             for ( auto p : fs::directory_iterator( path ) ) {
+// AppleClang 10/High Sierra refuses to convert Boost::filesystem::path to string
+#ifdef CPPFS_IS_BOOSTFS
+              ( is_directory( p.path() ) ? entries.dirs : entries.files ).emplace_back( p.path().filename().string() );
+#else
               ( is_directory( p.path() ) ? entries.dirs : entries.files ).emplace_back( p.path().filename() );
+#endif
             }
 
             out = std::move( entries );
@@ -240,10 +255,17 @@ namespace GitCondDB {
         }
 
       private:
+// Boost 1.69 on AppleClang 10/High Sierra appears to not be able to use
+// string_views with Boost::filesystem::path
+#ifdef CPPFS_IS_BOOSTFS
+        inline fs::path to_path( std::string_view object_id ) const {
+          return m_root / std::string{strip_tag( object_id )};
+        }
+#else
         inline fs::path to_path( std::string_view object_id ) const { return m_root / strip_tag( object_id ); }
-
+#endif
         fs::path m_root;
-      };
+      }; // namespace details
 
       class JSONImpl : public DBImpl {
         using json = nlohmann::json;
@@ -253,7 +275,13 @@ namespace GitCondDB {
           if ( data.find_first_of( '{' ) != data.npos ) {
             info( "using JSON data from memory" );
             m_json = json::parse( data );
+// Boost 1.69 on AppleClang 10/High Sierra appears to not be able to use
+// string_views with Boost::filesystem::path
+#ifdef CPPFS_IS_BOOSTFS
+          } else if ( is_regular_file( fs::path( std::string{data} ) ) ) {
+#else
           } else if ( is_regular_file( fs::path( data ) ) ) {
+#endif
             info( fmt::format( "loading JSON data from '{}'", data ) );
             std::ifstream stream{std::string{data}};
             stream >> m_json;

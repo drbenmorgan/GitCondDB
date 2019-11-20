@@ -1,0 +1,1 @@
+find_dependency(Boost @Boost_MAJOR_VERSION@.@Boost_MINOR_VERSION@.@Boost_SUBMINOR_VERSION@ COMPONENTS filesystem)
