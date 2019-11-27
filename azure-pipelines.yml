@@ -19,6 +19,7 @@ jobs:
   steps:
   - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
+  # FMT is only 4.0 on Ubuntu, so will need to build/cache!
   - script: sudo apt install libgit2-dev libfmt-dev
     condition: startsWith(variables.imageName,'ubuntu')
   - script: mkdir build
