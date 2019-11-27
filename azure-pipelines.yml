@@ -2,7 +2,7 @@
 trigger:
 - azure
 
-- job:
+- job: Hosted
   strategy:
     matrix:
       ubuntu-18.04:
@@ -16,5 +16,5 @@ trigger:
   pool:
     vmImage: $(imageName)
   steps:
-  - script: brew install boost
+  - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
