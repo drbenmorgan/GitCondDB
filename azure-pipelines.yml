@@ -2,6 +2,7 @@
 trigger:
 - azure
 
+jobs:
 - job: Hosted
   strategy:
     matrix:
