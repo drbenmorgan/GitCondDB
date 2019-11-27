@@ -54,7 +54,7 @@ namespace GitCondDB {
         void debug( std::string_view ) const override {}
       };
 
-      class DBImpl {
+      struct DBImpl {
       public:
         using dir_content = CondDB::dir_content;
 
