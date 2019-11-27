@@ -27,6 +27,8 @@ jobs:
       git clone https://github.com/fmtlib/fmt.git fmt.git
       cd fmt.git
       git checkout 5.2.1
+      cmake -DCMAKE_INSTALL_PREFIX=$(Pipeline.Workspace)/fmt.install -DCMAKE_CXX_STANDARD=17 .
+      cmake --build . --target install
     displayName: Build fmt 5.2
     condition: startsWith(variables.imageName,'ubuntu')
   - script: mkdir build
