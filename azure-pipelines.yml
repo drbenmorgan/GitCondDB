@@ -19,3 +19,13 @@ jobs:
   steps:
   - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
+  - script: mkdir build
+  - script: cmake -DCMAKE_BUILD_TYPE=Debug ..
+    displayName: CMake Configure
+    workingDirectory: build
+  - script: cmake --build . --config Debug
+    displayName: CMake Build
+    workingDirectory: build
+  - script: ctest -VV
+    displayName: CTest
+    workingDirectory: build
