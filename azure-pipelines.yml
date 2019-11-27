@@ -32,7 +32,8 @@ jobs:
     displayName: Build fmt 5.2
     condition: startsWith(variables.imageName,'ubuntu')
   - script: mkdir build
-  - script: cmake -DCMAKE_BUILD_TYPE=Debug ..
+    displayName: Create Build Directory
+  - script: cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(Pipeline.Workspace)/fmt.install ..
     displayName: CMake Configure
     workingDirectory: build
   - script: cmake --build . --config Debug
