@@ -19,6 +19,8 @@ jobs:
   steps:
   - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
+  - script: apt install libgit2-dev libfmt-dev
+    condition: startsWith(variables.imageName,'ubuntu')
   - script: mkdir build
   - script: cmake -DCMAKE_BUILD_TYPE=Debug ..
     displayName: CMake Configure
