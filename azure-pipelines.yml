@@ -3,12 +3,39 @@ trigger:
 - azure
 
 jobs:
+- job: CVMFS Ubuntu 18.04
+  pool:
+    vmImage: 'ubuntu-18.04'
+  steps:
+  - script: |
+      sudo apt-get install lsb-release
+      wget https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest_all.deb
+      sudo dpkg -i cvmfs-release-latest_all.deb
+      rm -f cvmfs-release-latest_all.deb
+      sudo apt-get update
+      sudo apt-get install cvmfs cvmfs-config-default
+      sudo cvmfs_config setup
+      echo  "CVMFS_REPOSITORIES=sft.cern.ch" | sudo tee -a  /etc/cvmfs/default.local > /dev/null
+      echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
+      sudo service autofs restart
+      sudo cvmfs_config probe
+    displayName: Install CVMFS
+
+  - script: mkdir build
+    displayName: Create Build Directory
+  
+  - script: |
+      source /cvmfs/sft.cern.ch/lcg/views/LCG_96bpython3/x86_64-ubuntu1804-gcc8-opt/setup.sh
+      cmake -DCMAKE_BUILD_TYPE=Debug ..
+      cmake --build .
+      ctest -VV
+    workingDirectory: build
+    displayName: CMake Configure/Build/Test under CVMFS
+
 - job: Hosted
   strategy:
     matrix:
       ubuntu-18.04:
-        imageName: 'ubuntu-18.04'
-      ubuntu-18.04-cvmfs:
         imageName: 'ubuntu-18.04'
       macos-10.14:
         imageName: 'macos-10.14'
@@ -21,26 +48,10 @@ jobs:
   steps:
   - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
-
-  # CVMFS Ubuntu??
-  - script: |
-      sudo apt-get install lsb-release
-      wget https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest_all.deb
-      sudo dpkg -i cvmfs-release-latest_all.deb
-      rm -f cvmfs-release-latest_all.deb
-      sudo apt-get update
-      sudo apt-get install cvmfs cvmfs-config-default
-      sudo cvmfs_config setup
-      echo  "CVMFS_REPOSITORIES=sft.cern.ch" | sudo tee -a  /etc/cvmfs/default.local > /dev/null
-      echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
-      sudo service autofs restart
-      sudo cvmfs_config chksetup
-      sudo cvmfs_config showconfig
-      sudo cvmfs_config probe
-    condition: endsWith(variables['Agent.JobName'],'cvmfs')
-  
+ 
   # FMT is only 4.0 on Ubuntu, so will need to build/cache!
   - script: sudo apt install libgit2-dev googletest
+    displayName: Install System Build Dependencies
     condition: startsWith(variables.imageName,'ubuntu')
 
   # Cache will go here...
@@ -49,7 +60,7 @@ jobs:
       key: 'cppdeps | "$(Agent.OS)"'
       path: $(Pipeline.Workspace)/fmt.install
       cacheHitVar: DEPS_CACHE_RESTORED
-    displayName: Cache/Restore Dependencies
+    displayName: Cache/Restore Local Build Dependencies
     condition: startsWith(variables.imageName,'ubuntu')
   
   - script : |
