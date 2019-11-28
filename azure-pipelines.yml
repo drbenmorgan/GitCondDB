@@ -23,11 +23,15 @@ jobs:
     displayName: Install CVMFS
   - script: |
       docker pull centos:7
-      # Works, but needs packages in the container!
-      # Also does not give a fail status into the pipeline (result of docker run)
-      docker run -v /cvmfs:/cvmfs:shared -v $(pwd):/gitconddb centos:7 /bin/bash -c "cd /gitconddb && \
-        source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-centos7-gcc8-dbg/setup.sh && echo $?"
-      echo $?
+      docker run -itd \
+        -v $(Pipeline.Workspace):/gitconddb \
+        -v /cvmfs:/cvmfs:shared \
+        --name centos-7 \
+        centos:7 /bin/bash
+    displayName: Start Docker
+  - script: |
+      docker exec centos-7 "cd /gitconddb && ls"
+      docker exec centos-7 "ls -larth /cvmfs/sft.cern.ch/lcg/views"
 
 
 - job: ubuntu_1804_cvmfs
