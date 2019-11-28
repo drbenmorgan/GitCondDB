@@ -33,6 +33,8 @@ jobs:
       echo  "CVMFS_REPOSITORIES=sft.cern.ch" | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       sudo service autofs restart
+      sudo cvmfs_config chksetup
+      sudo cvmfs_config showconfig
       sudo cvmfs_config probe
     condition: endsWith(variables['Agent.JobName'],'cvmfs')
   
