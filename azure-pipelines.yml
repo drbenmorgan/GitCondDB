@@ -25,8 +25,9 @@ jobs:
     displayName: Create Build Directory
   
   - script: |
+      # Native azure host sets CC/CXX, but LCG setup scripts won't update if set
+      unset CC CXX FC
       source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-ubuntu1804-gcc8-opt/setup.sh
-      env
       cmake -DCMAKE_BUILD_TYPE=Debug ..
       cmake --build .
       ctest -VV
