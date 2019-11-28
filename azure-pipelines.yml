@@ -25,7 +25,7 @@ jobs:
     displayName: Create Build Directory
   
   - script: |
-      source /cvmfs/sft.cern.ch/lcg/views/LCG_96bpython3/x86_64-ubuntu1804-gcc8-opt/setup.sh
+      source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-ubuntu1804-gcc8-opt/setup.sh
       cmake -DCMAKE_BUILD_TYPE=Debug ..
       cmake --build .
       ctest -VV
