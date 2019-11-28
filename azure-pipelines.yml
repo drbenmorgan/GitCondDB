@@ -20,15 +20,14 @@ jobs:
       echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       sudo service autofs restart
       sudo cvmfs_config probe
-       #sudo service autofs stop  # systemd: systemctl stop autofs
-      #sudo chkconfig autofs off  # systemd: systemctl disable autofs
-      #sudo mkdir -p /cvmfs/sft.cern.ch
-      #sudo mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
     displayName: Install CVMFS
   - script: |
       docker pull centos:7
+      # Works, but needs packages in the container!
+      # Also does not give a fail status into the pipeline (result of docker run)
       docker run -v /cvmfs:/cvmfs:shared -v $(pwd):/gitconddb centos:7 /bin/bash -c "cd /gitconddb && \
         source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-centos7-gcc8-dbg/setup.sh"
+      echo $?
 
 
 - job: ubuntu_1804_cvmfs
