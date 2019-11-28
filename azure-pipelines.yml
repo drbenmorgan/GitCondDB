@@ -8,7 +8,7 @@ jobs:
     matrix:
       ubuntu-18.04:
         imageName: 'ubuntu-18.04'
-      cvmfs-ubuntu-18.04:
+      ubuntu-18.04-cvmfs:
         imageName: 'ubuntu-18.04'
       macos-10.14:
         imageName: 'macos-10.14'
@@ -34,7 +34,7 @@ jobs:
       echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       sudo service autofs restart
       sudo cvmfs_config probe
-    condition: startsWith(variables.imageName,'cvmfs')
+    condition: endsWith(variables.Agent.JobName,'cvmfs')
   
   # FMT is only 4.0 on Ubuntu, so will need to build/cache!
   - script: sudo apt install libgit2-dev googletest
