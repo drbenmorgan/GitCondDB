@@ -28,7 +28,7 @@ jobs:
     image: centos:7
     options: -v /cvmfs:/cvmfs:shared
   steps:
-  - script: ls -larth /etc
+  - script: ls -larth /cvmfs/sft.cern.ch
 
 
 - job: ubuntu_1804_cvmfs
