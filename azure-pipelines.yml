@@ -32,7 +32,7 @@ jobs:
   - script: |
       docker ps -a
       docker exec centos-7 env
-      docker exec centos-7 ls /gitconddb/*
+      docker exec centos-7 ls -larth /gitconddb
       docker exec centos-7 ls -larth /cvmfs/sft.cern.ch/lcg/views
 
 
