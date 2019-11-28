@@ -27,7 +27,7 @@ jobs:
     displayName: Install CVMFS
   - script: |
       docker pull centos:7
-      docker run -v /cvmfs:/cvmfs:shared -v $(pwd):/gitconddb /bin/bash -c "cd /gitconddb && \
+      docker run -v /cvmfs:/cvmfs:shared -v $(pwd):/gitconddb centos:7 /bin/bash -c "cd /gitconddb && \
         source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-centos7-gcc8-dbg/setup.sh"
 
 
