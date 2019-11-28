@@ -24,7 +24,7 @@ jobs:
   - script: |
       docker pull centos:7
       docker run -itd \
-        -v $(Pipeline.Workspace):/gitconddb \
+        -v $(Pipeline.Workspace):$(Pipeline.Workspace) \
         -v /cvmfs:/cvmfs:shared \
         --name centos-7 \
         centos:7
@@ -32,7 +32,7 @@ jobs:
   - script: |
       docker ps -a
       docker exec centos-7 env
-      docker exec centos-7 ls -larth /gitconddb
+      docker exec centos-7 ls -larth $(Pipeline.Workspace)
       docker exec centos-7 ls -larth /cvmfs/sft.cern.ch/lcg/views
 
 
