@@ -3,7 +3,7 @@ trigger:
 - azure
 
 jobs:
-- job: CVMFS Ubuntu Bionic
+- job: ubuntu_1804_cvmfs
   pool:
     vmImage: 'ubuntu-18.04'
   steps:
