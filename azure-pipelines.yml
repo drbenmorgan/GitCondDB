@@ -31,9 +31,9 @@ jobs:
     displayName: Start Docker
   - script: |
       docker ps -a
-      docker exec -d env
-      docker exec centos-7 ls /gitconddb
-      docker exec centos-7 "ls -larth /cvmfs/sft.cern.ch/lcg/views"
+      docker exec centos-7 env
+      docker exec centos-7 ls /gitconddb/*
+      docker exec centos-7 ls -larth /cvmfs/sft.cern.ch/lcg/views
 
 
 - job: ubuntu_1804_cvmfs
