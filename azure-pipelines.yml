@@ -18,19 +18,17 @@ jobs:
       sudo cvmfs_config setup
       echo  "CVMFS_REPOSITORIES=sft.cern.ch" | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
-      sudo service autofs stop  # systemd: systemctl stop autofs
-      sudo chkconfig autofs off  # systemd: systemctl disable autofs
-      sudo mkdir -p /cvmfs/sft.cern.ch
-      sudo mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
+      sudo service autofs restart
+      sudo cvmfs_config probe
+       #sudo service autofs stop  # systemd: systemctl stop autofs
+      #sudo chkconfig autofs off  # systemd: systemctl disable autofs
+      #sudo mkdir -p /cvmfs/sft.cern.ch
+      #sudo mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
     displayName: Install CVMFS
-
-- job: CVMFSDocker
-  dependsOn: ubuntu_1604_cvmfs
-  container: 
-    image: centos:7
-    options: -v /cvmfs/sft.cern.ch:/cvmfs/sft.cern.ch:shared
-  steps:
-  - script: source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-centos7-gcc8-dbg/setup.sh 
+  - script: |
+      docker pull centos:7
+      docker run -v /cvmfs:/cvmfs:shared -v $(pwd):/gitconddb /bin/bash -c "cd /gitconddb && \
+        source /cvmfs/sft.cern.ch/lcg/views/LCG_96/x86_64-centos7-gcc8-dbg/setup.sh"
 
 
 - job: ubuntu_1804_cvmfs
