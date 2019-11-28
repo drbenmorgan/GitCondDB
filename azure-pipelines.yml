@@ -34,7 +34,7 @@ jobs:
       echo  "CVMFS_HTTP_PROXY=DIRECT"  | sudo tee -a  /etc/cvmfs/default.local > /dev/null
       sudo service autofs restart
       sudo cvmfs_config probe
-    condition: endsWith(variables.Agent.JobName,'cvmfs')
+    condition: endsWith(variables['Agent.JobName'],'cvmfs')
   
   # FMT is only 4.0 on Ubuntu, so will need to build/cache!
   - script: sudo apt install libgit2-dev googletest
