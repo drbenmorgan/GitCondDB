@@ -19,10 +19,20 @@ jobs:
   steps:
   - script: brew install boost pkg-config libgit2 fmt
     condition: startsWith(variables.imageName,'macos')
+  
   # FMT is only 4.0 on Ubuntu, so will need to build/cache!
   - script: sudo apt install libgit2-dev googletest
     condition: startsWith(variables.imageName,'ubuntu')
+
   # Cache will go here...
+  - task: Cache@2
+    inputs:
+      key: 'cppdeps | "$(Agent.OS)"'
+      path: $(Pipeline.Workspace)/fmt.install
+      cacheHitVar: DEPS_CACHE_RESTORED
+    displayName: Cache/Restore Dependencies
+    condition: startsWith(variables.imageName,'ubuntu')
+  
   - script : |
       git clone https://github.com/fmtlib/fmt.git fmt.git
       cd fmt.git
@@ -30,15 +40,19 @@ jobs:
       cmake -DCMAKE_INSTALL_PREFIX=$(Pipeline.Workspace)/fmt.install -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_STANDARD=17 -DFMT_DOC=OFF -DFMT_TEST=OFF .
       cmake --build . --target install
     displayName: Build fmt 5.2
-    condition: startsWith(variables.imageName,'ubuntu')
+    condition: and(startsWith(variables.imageName,'ubuntu'), ne(variables.DEPS_CACHE_RESTORED,'true'))
+  
   - script: mkdir build
     displayName: Create Build Directory
+  
   - script: cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(Pipeline.Workspace)/fmt.install ..
     displayName: CMake Configure
     workingDirectory: build
+  
   - script: cmake --build . --config Debug
     displayName: CMake Build
     workingDirectory: build
+  
   - script: ctest -VV
     displayName: CTest
     workingDirectory: build
