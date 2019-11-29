@@ -127,14 +127,14 @@ jobs:
     vcpkgGitRef: '2019.10'
   steps:
   - task: Cache@2
+    displayName: Cache/Restore vcpkg
     inputs:
       key: cppdeps | "$(vcpkgGitRef)" | "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
-    displayName: Cache/Restore vcpkg
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
-      vcpkgGitRef: $(vcpkgGitRef)
+      vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
   - task: run-cmake@0
