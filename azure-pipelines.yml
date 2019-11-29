@@ -140,3 +140,5 @@ jobs:
       vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
+  - script: |
+      ls -larth $(Build.BinariesDirectory)/vcpkg
