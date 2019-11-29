@@ -142,3 +142,4 @@ jobs:
       vcpkgArguments: fmt libgit2 gtest
   - script: |
       ls -larth $(Build.BinariesDirectory)/vcpkg
+      cat $(Build.BinariesDirectory)/.artifactignore
