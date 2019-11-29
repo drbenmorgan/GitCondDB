@@ -133,7 +133,7 @@ jobs:
       key: cppdeps | "$(vcpkgGitRef)" | "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - script: |
-      ls $(Build.BinariesDirectory)
+      ls $(Build.BinariesDirectory)/vcpkg
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
