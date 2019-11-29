@@ -123,3 +123,15 @@ jobs:
   - script: ctest -VV
     displayName: CTest
     workingDirectory: build
+
+- job: VS2019_vcpkg
+  pool:
+    vmImage: 'windows-2019'
+  variables:
+    vcpkgGitRef: 2019.10
+  steps:
+  - task: run-vcpkg@0 
+    displayName: 'Run vcpkg'
+    inputs:
+      vcpkgTriplet: x64-windows
+      vcpkgArguments: fmt libgit2 gtest
