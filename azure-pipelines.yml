@@ -123,10 +123,17 @@ jobs:
 - job: Windows
   pool:
     vmImage: 'windows-latest'
+  variables:
+    vcpkgGitRef: '2019.10'
   steps:
-  - script: echo "hello world"
+  - task: Cache@2
+    inputs:
+      key: cppdeps | "$(vcpkgGitRef)" | "$(Agent.OS)"
+      path: '$(Build.BinariesDirectory)/vcpkg'
+    displayName: Cache/Restore vcpkg
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
+      vcpkgGitRef: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
