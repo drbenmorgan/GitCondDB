@@ -130,8 +130,9 @@ jobs:
   variables:
     vcpkgGitRef: 2019.10
   steps:
-  - task: run-vcpkg@0 
-    displayName: 'Run vcpkg'
-    inputs:
-      vcpkgTriplet: x64-windows
-      vcpkgArguments: fmt libgit2 gtest
+  - script: echo "hello world"
+  #- task: run-vcpkg@0 
+  #  displayName: 'Run vcpkg'
+  #  inputs:
+  #    vcpkgTriplet: x64-windows
+  #    vcpkgArguments: fmt libgit2 gtest
