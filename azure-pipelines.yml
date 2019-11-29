@@ -130,7 +130,7 @@ jobs:
   - task: Cache@2
     displayName: Cache/Restore vcpkg
     inputs:
-      key: cppdeps | "$(vcpkgGitRef)" | foo |  "$(Agent.OS)"
+      key: cppdeps | v1 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - script: |
       ls $(Build.BinariesDirectory)
@@ -140,9 +140,3 @@ jobs:
       vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
-  - task: run-cmake@0
-    displayName: 'Run CMake with Ninja'
-    inputs:
-      useVcpkgToolchainFile: true
-      vcpkgTriplet: x64-windows
-      buildWithCMakeArgs: '-- -v'
