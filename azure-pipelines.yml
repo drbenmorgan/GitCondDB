@@ -137,7 +137,7 @@ jobs:
       git checkout origin/pkgconf-1.6.2-fixwinerrors
       cmake .
       cmake --build . -v
-      cmake --build . -v --target test
+      ctest -C Debug
     workingDirectory: $(Build.BinariesDirectory)
   # ... so try conda?
   # ... works, and should also try pkgconf (1.6.2 for CMake, higher need meson)
