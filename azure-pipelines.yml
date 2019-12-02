@@ -145,20 +145,18 @@ jobs:
       env
 
 
-  #- task: Cache@2
-  #  displayName: Cache/Restore vcpkg
-  #  inputs:
-  #    key: cppdeps | v9 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
-  #    path: '$(Build.BinariesDirectory)/vcpkg'
-  #- script: |
-  #    ls -la $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
+  - task: Cache@2
+    displayName: Cache/Restore vcpkg
+    inputs:
+      key: cppdeps | v10 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
+      path: '$(Build.BinariesDirectory)/vcpkg'
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
       vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2
-      vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
+      vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
   #- script: |
   #    du -hs $(Build.BinariesDirectory)/vcpkg/packages
   #    du -hs $(Build.BinariesDirectory)/vcpkg/installed
