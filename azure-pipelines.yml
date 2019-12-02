@@ -130,10 +130,10 @@ jobs:
   - task: Cache@2
     displayName: Cache/Restore vcpkg
     inputs:
-      key: cppdeps | v5 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
+      key: cppdeps | v6 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
-  - script: |
-      ls -la $(Build.BinariesDirectory)/vcpkg
+  #- script: |
+  #    ls -la $(Build.BinariesDirectory)/vcpkg
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
@@ -141,7 +141,7 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg_remote_url.last\n"
-  - script: printf "!.git\n**/*\n!installed\n!/vcpkg\n!/vcpkg.exe\n!vcpkg_remote_url.last\n" > $(Build.BinariesDirectory)/vcpkg/.artifactignore 
+  - script: printf "!.git\n**/*\n!installed\n!vcpkg.exe\n!vcpkg_remote_url.last\n" > $(Build.BinariesDirectory)/vcpkg/.artifactignore 
   - script: |
       ls -larth $(Build.BinariesDirectory)/vcpkg
       cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
