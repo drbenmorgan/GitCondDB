@@ -133,7 +133,8 @@ jobs:
       key: cppdeps | v8 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - script: |
-      ls -la $(Build.BinariesDirectory)/vcpkg
+      ls -la $(Build.BinariesDirectory)/vcpkg/installed
+      which tree
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
@@ -141,7 +142,6 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
-  #- script: printf "buildtrees\ndownloads\npackages\n" > $(Build.BinariesDirectory)/vcpkg/.artifactignore 
   - script: |
       ls -larth $(Build.BinariesDirectory)/vcpkg
       cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
