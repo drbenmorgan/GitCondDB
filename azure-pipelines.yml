@@ -136,7 +136,8 @@ jobs:
     displayName: Create conda environment
   - script: |
       call activate myEnvironment
-      conda install --yes --quiet --name myEnvironment pkg-config
+      conda install --yes --quiet --name myEnvironment pkgconfig
+      which pkg-config
     displayName: Install conda packages
 
 
