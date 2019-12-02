@@ -130,6 +130,7 @@ jobs:
   # Two core issues:
   # - pkg-config on hosted windows is broken
   # ... so try conda?
+  # ... works, and should also try pkgconf (1.6.2 for CMake, higher need meson)
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
   - script: conda create --yes --quiet --name myEnvironment
@@ -170,8 +171,8 @@ jobs:
       call activate myEnvironment
       pkg-config --cflags --libs libgit2
       ls -larth $(Build.BinariesDirectory)/vcpkg
-      cmake -GNinja $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-      cmake --build .
+      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+      cmake --build . -v
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
