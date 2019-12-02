@@ -168,8 +168,9 @@ jobs:
   #    buildWithCMakeArgs: '-- -v'
   - script: |
       call activate myEnvironment
-      pkg-config --libs libgit2
-      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+      pkg-config --cflags --libs libgit2
+      ls -larth $(Build.BinariesDirectory)/vcpkg
+      cmake -GNinja $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
       cmake --build .
     workingDirectory: $(Build.BinariesDirectory)
     env:
