@@ -150,7 +150,10 @@ jobs:
   #    useVcpkgToolchainFile: true
   #    vcpkgTriplet: x64-windows
   #    buildWithCMakeArgs: '-- -v'
-  - script: cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+  - script: |
+      env
+      pkg-config --libs libgit2
+      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
