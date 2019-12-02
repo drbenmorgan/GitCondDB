@@ -141,7 +141,7 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg_remote_url.last\n"
-  - script: echo -e "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg_remote_url.last\n" > $(Build.BinariesDirectory)/vcpkg/.artifactignore 
+  - script: printf "!.git\n**/*\n!installed\n!/vcpkg\n!vcpkg_remote_url.last\n" > $(Build.BinariesDirectory)/vcpkg/.artifactignore 
   - script: |
       ls -larth $(Build.BinariesDirectory)/vcpkg
       cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
