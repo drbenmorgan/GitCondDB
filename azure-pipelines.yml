@@ -141,7 +141,9 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
-  - script: cat $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig/libgit2.pc 
+  - script: |
+      du -hs $(Build.BinariesDirectory)/vcpkg/packages
+      du -hs $(Build.BinariesDirectory)/vcpkg/installed
   - task: run-cmake@0
     displayName: 'Run CMake with Ninja'
     inputs:
