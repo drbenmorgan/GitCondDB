@@ -131,11 +131,11 @@ jobs:
   # - pkg-config on hosted windows is broken
   # Could try and build pkgconf...
   - script: |
-    git clone https://github.com/pkgconf/pkgconf.git
-    cd pkgconf
-    git checkout pkgconf-1.6.2
-    cmake .
-    cmake --build . -v
+      git clone https://github.com/pkgconf/pkgconf.git
+      cd pkgconf
+      git checkout pkgconf-1.6.2
+      cmake .
+      cmake --build . -v
     workingDirectory: $(Build.BinariesDirectory)
   # ... so try conda?
   # ... works, and should also try pkgconf (1.6.2 for CMake, higher need meson)
