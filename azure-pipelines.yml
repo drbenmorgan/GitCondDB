@@ -129,11 +129,12 @@ jobs:
   steps:
   # Two core issues:
   # - pkg-config on hosted windows is broken
-  # Could try and build pkgconf...
+  # Could try and build pkgconf... (needs patching...)
+  # Better thorough vcpkg, as can then use directly...
   - script: |
-      git clone https://github.com/pkgconf/pkgconf.git
+      git clone https://github.com/drbenmorgan/pkgconf.git
       cd pkgconf
-      git checkout pkgconf-1.6.2
+      git checkout origin/pkgconf-1.6.2-fixwinerrors
       cmake .
       cmake --build . -v
     workingDirectory: $(Build.BinariesDirectory)
