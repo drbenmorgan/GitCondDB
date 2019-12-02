@@ -152,13 +152,13 @@ jobs:
   #    path: '$(Build.BinariesDirectory)/vcpkg'
   #- script: |
   #    ls -la $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
-  #- task: run-vcpkg@0 
-  #  displayName: 'Run vcpkg'
-  #  inputs:
-  #    vcpkgGitCommitId: $(vcpkgGitRef)
-  #    vcpkgTriplet: x64-windows
-  #    vcpkgArguments: fmt libgit2 gtest
-  #    vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
+  - task: run-vcpkg@0 
+    displayName: 'Run vcpkg'
+    inputs:
+      vcpkgGitCommitId: $(vcpkgGitRef)
+      vcpkgTriplet: x64-windows
+      vcpkgArguments: fmt libgit2
+      vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
   #- script: |
   #    du -hs $(Build.BinariesDirectory)/vcpkg/packages
   #    du -hs $(Build.BinariesDirectory)/vcpkg/installed
@@ -168,13 +168,13 @@ jobs:
   #    useVcpkgToolchainFile: true
   #    vcpkgTriplet: x64-windows
   #    buildWithCMakeArgs: '-- -v'
-  #- script: |
-  #    env
-  #    pkg-config --libs libgit2
-  #    cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-  #  workingDirectory: $(Build.BinariesDirectory)
-  #  env:
-  #    PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
+  - script: |
+      call activate myEnvironment
+      pkg-config --libs libgit2
+      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+    workingDirectory: $(Build.BinariesDirectory)
+    env:
+      PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
   #- script: |
   #    ls -larth $(Build.BinariesDirectory)/vcpkg
   #    cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
