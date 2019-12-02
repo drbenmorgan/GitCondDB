@@ -137,8 +137,11 @@ jobs:
   - script: |
       call activate myEnvironment
       conda install --yes --quiet --name myEnvironment pkgconfig
-      pkg-config --help
     displayName: Install conda packages
+  - script: |
+      call activate myEnvironment
+      pkg-config --help
+      env
 
 
   #- task: Cache@2
