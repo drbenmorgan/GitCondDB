@@ -141,6 +141,7 @@ jobs:
   - script: |
       call activate myEnvironment
       pkg-config --help
+      which pkg-config
       env
 
 
