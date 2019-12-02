@@ -129,6 +129,14 @@ jobs:
   steps:
   # Two core issues:
   # - pkg-config on hosted windows is broken
+  # Could try and build pkgconf...
+  - script: |
+    git clone https://github.com/pkgconf/pkgconf.git
+    cd pkgconf
+    git checkout pkgconf-1.6.2
+    cmake .
+    cmake --build . -v
+    workingDirectory: $(Build.BinariesDirectory)
   # ... so try conda?
   # ... works, and should also try pkgconf (1.6.2 for CMake, higher need meson)
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
@@ -158,9 +166,6 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
-  #- script: |
-  #    du -hs $(Build.BinariesDirectory)/vcpkg/packages
-  #    du -hs $(Build.BinariesDirectory)/vcpkg/installed
   #- task: run-cmake@0
   #  displayName: 'Run CMake with Ninja'
   #  inputs:
@@ -176,7 +181,4 @@ jobs:
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
-  #- script: |
-  #    ls -larth $(Build.BinariesDirectory)/vcpkg
-  #    cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
 
