@@ -133,7 +133,7 @@ jobs:
       key: cppdeps | v8 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - script: |
-      ls -la $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/*
+      ls -la $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
