@@ -127,37 +127,50 @@ jobs:
     vcpkgGitRef: '2019.10'
     system.debug: true
   steps:
-  - task: Cache@2
-    displayName: Cache/Restore vcpkg
-    inputs:
-      key: cppdeps | v9 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
-      path: '$(Build.BinariesDirectory)/vcpkg'
+  # Two core issues:
+  # - pkg-config on hosted windows is broken
+  # ... so try conda?
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+  - script: conda create --yes --quiet --name myEnvironment
+    displayName: Create conda environment
+  - script: |
+      call activate myEnvironment
+      conda install --yes --quiet --name myEnvironment pkg-config
+    displayName: Install conda packages
+
+
+  #- task: Cache@2
+  #  displayName: Cache/Restore vcpkg
+  #  inputs:
+  #    key: cppdeps | v9 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
+  #    path: '$(Build.BinariesDirectory)/vcpkg'
   #- script: |
   #    ls -la $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
-  - task: run-vcpkg@0 
-    displayName: 'Run vcpkg'
-    inputs:
-      vcpkgGitCommitId: $(vcpkgGitRef)
-      vcpkgTriplet: x64-windows
-      vcpkgArguments: fmt libgit2 gtest
-      vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
-  - script: |
-      du -hs $(Build.BinariesDirectory)/vcpkg/packages
-      du -hs $(Build.BinariesDirectory)/vcpkg/installed
+  #- task: run-vcpkg@0 
+  #  displayName: 'Run vcpkg'
+  #  inputs:
+  #    vcpkgGitCommitId: $(vcpkgGitRef)
+  #    vcpkgTriplet: x64-windows
+  #    vcpkgArguments: fmt libgit2 gtest
+  #    vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\n"
+  #- script: |
+  #    du -hs $(Build.BinariesDirectory)/vcpkg/packages
+  #    du -hs $(Build.BinariesDirectory)/vcpkg/installed
   #- task: run-cmake@0
   #  displayName: 'Run CMake with Ninja'
   #  inputs:
   #    useVcpkgToolchainFile: true
   #    vcpkgTriplet: x64-windows
   #    buildWithCMakeArgs: '-- -v'
-  - script: |
-      env
-      pkg-config --libs libgit2
-      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-    workingDirectory: $(Build.BinariesDirectory)
-    env:
-      PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
-  - script: |
-      ls -larth $(Build.BinariesDirectory)/vcpkg
-      cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
+  #- script: |
+  #    env
+  #    pkg-config --libs libgit2
+  #    cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
+  #  workingDirectory: $(Build.BinariesDirectory)
+  #  env:
+  #    PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
+  #- script: |
+  #    ls -larth $(Build.BinariesDirectory)/vcpkg
+  #    cat $(Build.BinariesDirectory)/vcpkg/.artifactignore
 
