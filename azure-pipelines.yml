@@ -127,46 +127,17 @@ jobs:
     vcpkgGitRef: '2019.10'
     system.debug: true
   steps:
-  # Two core issues:
-  # - pkg-config on hosted windows is broken
-  # Could try and build pkgconf... (needs patching...)
-  # Better thorough vcpkg, as can then use directly...
-  - script: |
-      git clone https://github.com/drbenmorgan/pkgconf.git
-      cd pkgconf
-      git checkout origin/pkgconf-1.6.2-fixwinerrors
-      cmake .
-      cmake --build . -v
-      ctest -C Debug
-    workingDirectory: $(Build.BinariesDirectory)
-  # ... so try conda?
-  # ... works, and should also try pkgconf (1.6.2 for CMake, higher need meson)
-  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
-    displayName: Add conda to PATH
-  - script: conda create --yes --quiet --name myEnvironment
-    displayName: Create conda environment
-  - script: |
-      call activate myEnvironment
-      conda install --yes --quiet --name myEnvironment pkgconfig
-    displayName: Install conda packages
-  - script: |
-      call activate myEnvironment
-      pkg-config --help
-      which pkg-config
-      env
-
-
   - task: Cache@2
     displayName: Cache/Restore vcpkg
     inputs:
-      key: cppdeps | v10 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
+      key: cppdeps | v11 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
       vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
-      vcpkgArguments: fmt libgit2
+      vcpkgArguments: tool-meson
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
   #- task: run-cmake@0
   #  displayName: 'Run CMake with Ninja'
@@ -174,12 +145,13 @@ jobs:
   #    useVcpkgToolchainFile: true
   #    vcpkgTriplet: x64-windows
   #    buildWithCMakeArgs: '-- -v'
+  # Could try and build pkgconf... (needs patching...)
+  # Better thorough vcpkg, as can then use directly...
   - script: |
-      call activate myEnvironment
-      pkg-config --cflags --libs libgit2
-      ls -larth $(Build.BinariesDirectory)/vcpkg
-      cmake $(Build.SourcesDirectory) -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=$(Build.BinariesDirectory)/vcpkg/scripts/buildsystems/vcpkg.cmake
-      cmake --build . -v
+      git clone https://github.com/drbenmorgan/pkgconf.git
+        cd pkgconf
+        $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/bin/meson -Dtests=false .
+        ninja
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
