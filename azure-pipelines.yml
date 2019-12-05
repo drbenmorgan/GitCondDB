@@ -150,7 +150,7 @@ jobs:
   - script: |
       git clone https://github.com/drbenmorgan/pkgconf.git
         cd pkgconf
-        ls $(Build.BinariesDirectory)/vcpkg
+        ls $(Build.BinariesDirectory)/vcpkg/installed
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
