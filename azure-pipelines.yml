@@ -150,9 +150,8 @@ jobs:
   - script: |
       python -m pip install meson ninja
       git clone https://github.com/drbenmorgan/pkgconf.git
-      mkdir pkgconf.build
+      meson -Dtests=false pkgconf.build
       cd pkgconf.build
-      meson -Dtests=false ../pkgconf.git
       ninja -v
     workingDirectory: $(Build.BinariesDirectory)
     env:
