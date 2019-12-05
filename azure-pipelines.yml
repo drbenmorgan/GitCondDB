@@ -151,6 +151,7 @@ jobs:
       git clone https://github.com/drbenmorgan/pkgconf.git
         cd pkgconf
         python -m pip install meson
+        which meson
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
