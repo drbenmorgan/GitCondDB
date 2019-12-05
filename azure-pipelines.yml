@@ -150,8 +150,10 @@ jobs:
   - script: |
       git clone https://github.com/drbenmorgan/pkgconf.git
         cd pkgconf
-        python -m pip install meson
-        which meson
+        python -m pip install meson ninja
+        meson -Dtests=OFF .
+        ninja -v
+    
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
