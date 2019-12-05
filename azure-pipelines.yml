@@ -150,8 +150,8 @@ jobs:
   - script: |
       git clone https://github.com/drbenmorgan/pkgconf.git
         cd pkgconf
-        ls $(Build.BinariesDirectory)/vcpkg/installed/share/*
-        find $(Build.BinariesDirectory) -name "meson*"
+        which python3
+        which pip
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
