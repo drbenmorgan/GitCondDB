@@ -151,6 +151,7 @@ jobs:
       python -m pip install meson ninja
       git clone https://github.com/drbenmorgan/pkgconf.git
       cd pkgconf
+      call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
       meson -Dtests=false pkgconf.build
       cd pkgconf.build
       ninja -v
