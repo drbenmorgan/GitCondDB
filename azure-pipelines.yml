@@ -148,12 +148,14 @@ jobs:
   # Could try and build pkgconf... (needs patching...)
   # Better thorough vcpkg, as can then use directly...
   - script: |
+      python -m pip install meson ninja
+      meson -Dtests=OFF .
+      ninja -v
       git clone https://github.com/drbenmorgan/pkgconf.git
-        cd pkgconf
-        python -m pip install meson ninja
-        meson -Dtests=OFF .
-        ninja -v
-    
+      mkdir pkgconf.build
+      cd pkgconf.build
+      meson -Dtests=false ../pkgconf.git
+      ninja -v
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
