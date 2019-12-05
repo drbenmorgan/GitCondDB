@@ -150,8 +150,7 @@ jobs:
   - script: |
       git clone https://github.com/drbenmorgan/pkgconf.git
         cd pkgconf
-        $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/bin/meson -Dtests=false .
-        ninja
+        ls $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/bin
     workingDirectory: $(Build.BinariesDirectory)
     env:
       PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
