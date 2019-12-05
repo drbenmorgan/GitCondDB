@@ -149,8 +149,6 @@ jobs:
   # Better thorough vcpkg, as can then use directly...
   - script: |
       python -m pip install meson ninja
-      meson -Dtests=OFF .
-      ninja -v
       git clone https://github.com/drbenmorgan/pkgconf.git
       mkdir pkgconf.build
       cd pkgconf.build
