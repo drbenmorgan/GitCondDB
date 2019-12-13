@@ -130,32 +130,18 @@ jobs:
   - task: Cache@2
     displayName: Cache/Restore vcpkg
     inputs:
-      key: cppdeps | v11 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
+      key: cppdeps | v12 | "$(vcpkgGitRef)" |  "$(Agent.OS)"
       path: '$(Build.BinariesDirectory)/vcpkg'
   - task: run-vcpkg@0 
     displayName: 'Run vcpkg'
     inputs:
       vcpkgGitCommitId: $(vcpkgGitRef)
       vcpkgTriplet: x64-windows
-      vcpkgArguments: tool-meson
+      vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
-  #- task: run-cmake@0
-  #  displayName: 'Run CMake with Ninja'
-  #  inputs:
-  #    useVcpkgToolchainFile: true
-  #    vcpkgTriplet: x64-windows
-  #    buildWithCMakeArgs: '-- -v'
-  # Could try and build pkgconf... (needs patching...)
-  # Better thorough vcpkg, as can then use directly...
-  - script: |
-      python -m pip install meson ninja
-      git clone https://github.com/drbenmorgan/pkgconf.git
-      cd pkgconf
-      call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-      meson -Dtests=false pkgconf.build
-      cd pkgconf.build
-      ninja -v
-    workingDirectory: $(Build.BinariesDirectory)
-    env:
-      PKG_CONFIG_PATH: $(Build.BinariesDirectory)/vcpkg/installed/x64-windows/lib/pkgconfig
-
+  - task: run-cmake@0
+    displayName: 'Run CMake with Ninja'
+    inputs:
+      useVcpkgToolchainFile: true
+      vcpkgTriplet: x64-windows
+      buildWithCMakeArgs: '-- -v'
