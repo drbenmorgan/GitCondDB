@@ -139,9 +139,9 @@ jobs:
       vcpkgTriplet: x64-windows
       vcpkgArguments: fmt libgit2 gtest
       vcpkgArtifactIgnoreEntries: "buildtrees\ndownloads\npackages\n"
-  - task: run-cmake@0
-    displayName: 'Run CMake with Ninja'
-    inputs:
-      useVcpkgToolchainFile: true
-      vcpkgTriplet: x64-windows
-      buildWithCMakeArgs: '-- -v'
+  #- task: run-cmake@0
+  #  displayName: 'Run CMake with Ninja'
+  #  inputs:
+  #    useVcpkgToolchainFile: true
+  #    vcpkgTriplet: x64-windows
+  #    buildWithCMakeArgs: '-- -v'
